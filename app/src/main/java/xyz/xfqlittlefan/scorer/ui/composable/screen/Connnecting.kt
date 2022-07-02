@@ -3,6 +3,7 @@ package xyz.xfqlittlefan.scorer.ui.composable.screen
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.*
@@ -27,6 +29,7 @@ import com.google.accompanist.flowlayout.FlowRow
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import io.ktor.server.application.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -54,7 +57,7 @@ fun Connecting(
         title = stringResource(R.string.page_title_connecting),
         actions = {
             IconButton(
-                onClick = { viewModel.onCreatingServerButtonClick(mainViewModel) },
+                onClick = { viewModel.onCreatingRoomButtonClick(mainViewModel) },
                 enabled = mainViewModel.server == null && !viewModel.showSeats
             ) {
                 Icon(
@@ -105,11 +108,13 @@ fun Connecting(
                         crossAxisAlignment = FlowCrossAxisAlignment.Center
                     ) {
                         viewModel.seats?.forEach { (seat, res) ->
-                            InputChip(selected = viewModel.selectedSeat == seat,
+                            InputChip(
+                                selected = viewModel.selectedSeat == seat,
                                 onClick = { viewModel.selectedSeat = seat },
                                 label = {
                                     Text(stringResource(res))
-                                }, enabled = viewModel.showSeats
+                                },
+                                enabled = viewModel.showSeats
                             )
                         }
                     }
@@ -149,17 +154,63 @@ fun Connecting(
                     }
                 }
             }
+            AnimatedVisibility(visible = mainViewModel.server != null) {
+                Column {
+                    Spacer(Modifier.height(20.dp))
+                    Button(
+                        onClick = viewModel::onRoomInfoButtonClick,
+                        enabled = mainViewModel.server != null
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = stringResource(R.string.page_content_connecting_button_room_information)
+                        )
+                    }
+                }
+            }
         }
+        AlertDialog(onDismissRequest = viewModel::dismissRoomInfoDialog, confirmButton = {
+            Button(onClick = { viewModel.onDeletingRoomButtonClick(mainViewModel) }) {
+                Text(stringResource(R.string.page_content_connecting_dialog_button_room_information_0))
+            }
+        }, dismissButton = {
+            Button(onClick = viewModel::dismissRoomInfoDialog) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        }, title = {
+            Text(stringResource(R.string.page_content_connecting_dialog_title_room_information))
+        }, text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                Text(stringResource(R.string.page_content_connecting_dialog_subtitle_room_information))
+                viewModel.dialogAddresses.forEachIndexed { index, address ->
+                    Text(text = stringResource(
+                        R.string.page_content_connecting_dialog_content_room_information,
+                        address.first,
+                        address.second
+                    ), modifier = Modifier.clickable {
+                        viewModel.addressMenuShowingIndex = index
+                    })
+                    DropdownMenu(
+                        expanded = viewModel.addressMenuShowingIndex == index,
+                        onDismissRequest = viewModel::dismissAddressMenu
+                    ) {
+
+                    }
+                }
+            }
+        })
     }
 }
 
 class ConnectingScreenViewModel : ViewModel() {
     var host by mutableStateOf("")
+
     fun onHostChange(newValue: String) {
         host = newValue
     }
 
     var port by mutableStateOf("")
+
     fun onPortChange(newValue: String) {
         port = newValue
     }
@@ -198,19 +249,53 @@ class ConnectingScreenViewModel : ViewModel() {
         selectedSeat = null
     }
 
+    var showRoomInfoDialog by mutableStateOf(false)
+    var dialogAddresses by mutableStateOf(listOf<Pair<String, String>>())
+    var addressMenuShowingIndex by mutableStateOf<Int?>(null)
+
+    fun onRoomInfoButtonClick() {
+        showRoomInfoDialog = true
+    }
+
+    fun dismissRoomInfoDialog() {
+        showRoomInfoDialog = false
+    }
+
+    fun dismissAddressMenu() {
+        addressMenuShowingIndex = null
+    }
+
     fun onConnectingButtonClick(seat: Int, navController: NavController, viewModel: MainViewModel) {
 
     }
 
-    fun onCreatingServerButtonClick(viewModel: MainViewModel) {
+    fun onCreatingRoomButtonClick(viewModel: MainViewModel) {
         viewModelScope.launch(Dispatchers.IO) {
             val launcher = RoomServerLauncher()
+            val host = InetAddress.getLocalHost().hostAddress!!
+            val port = launcher.server.resolvedConnectors().first().port.toString()
+            launcher.server.environment.monitor.subscribe(ApplicationStopped) {
+                viewModel.server = null
+                if (this@ConnectingScreenViewModel.host == host && this@ConnectingScreenViewModel.port == port) {
+                    this@ConnectingScreenViewModel.host = ""
+                    this@ConnectingScreenViewModel.port = ""
+                }
+                showRoomInfoDialog = false
+                dialogAddresses = emptyList()
+                addressMenuShowingIndex = null
+                onCancelingConnectionButtonClick()
+            }
             launcher.server.start()
+            this@ConnectingScreenViewModel.host = host
+            this@ConnectingScreenViewModel.port = port
             viewModel.server = launcher
-            host = InetAddress.getLocalHost().hostAddress!!
-            port = launcher.server.resolvedConnectors().first().port.toString()
             onGettingSeatsButtonClick()
         }
+    }
+
+    fun onDeletingRoomButtonClick(viewModel: MainViewModel) {
+        showRoomInfoDialog = false
+        viewModel.server?.server?.stop()
     }
 
     private fun NavController.navigateToMain(
