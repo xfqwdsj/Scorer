@@ -205,36 +205,39 @@ fun Connecting(
                     Spacer(Modifier.height(10.dp))
                     viewModel.dialogAddresses.forEachIndexed { index, address ->
                         Box {
-                            Text(text = stringResource(
+                            val addressString = stringResource(
                                 R.string.page_content_connecting_dialog_content_room_information,
                                 address.first,
                                 address.second
-                            ), modifier = Modifier.clickable {
+                            )
+                            Text(text = addressString, modifier = Modifier.clickable {
                                 viewModel.showAddressMenu(index)
                             })
                             DropdownMenu(
                                 expanded = viewModel.addressMenuShowingIndex == index,
                                 onDismissRequest = viewModel::dismissAddressMenu
                             ) {
-                                val addressString =
-                                    stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_copy)
                                 val context = LocalContext.current
-                                DropdownMenuItem(text = { Text(addressString) }, onClick = {
-                                    viewModel.onAddressMenuItemCopingClick(
-                                        context, addressString
-                                    )
-                                })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_copy)) },
+                                    onClick = {
+                                        viewModel.onAddressMenuItemCopingClick(
+                                            context, addressString
+                                        )
+                                        viewModel.dismissAddressMenu()
+                                    })
                                 DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_share)) },
                                     onClick = {
                                         viewModel.onAddressMenuItemSharingClick(
                                             context, addressString
                                         )
+                                        viewModel.dismissAddressMenu()
                                     })
                                 DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_show_qr)) },
                                     onClick = {
                                         viewModel.showQRDialog(
                                             addressString
                                         )
+                                        viewModel.dismissAddressMenu()
                                     })
                             }
                         }
