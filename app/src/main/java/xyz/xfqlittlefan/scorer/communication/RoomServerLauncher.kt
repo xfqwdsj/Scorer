@@ -11,6 +11,7 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.serialization.SerializationException
 import xyz.xfqlittlefan.scorer.R
 import xyz.xfqlittlefan.scorer.util.decodeFromJson
 import xyz.xfqlittlefan.scorer.util.encodeToJson
@@ -22,7 +23,7 @@ import xyz.xfqlittlefan.scorer.util.encodeToJson
  * @param password 指定连接到服务器所需的密码（0~65535）。如不填入或填入错误值会指定范围内的一个随机数。
  */
 class RoomServerLauncher(
-    private val seats: MutableMap<Int, Seat> = mutableMapOf(
+    private val seats: Map<Int, Seat> = mapOf(
         0 to Seat(R.string.player_east),
         1 to Seat(R.string.player_south),
         2 to Seat(R.string.player_west),
@@ -88,14 +89,17 @@ class RoomServerLauncher(
                             for (frame in incoming) {
                                 val message =
                                     (frame as Frame.Text).readText().decodeFromJson<Message>()
-
+                                broadcast(message)
                             }
                         } catch (e: ClosedReceiveChannelException) {
+                            e.printStackTrace()
+                        } catch (e: SerializationException) {
                             e.printStackTrace()
                         } catch (e: Throwable) {
                             e.printStackTrace()
                         } finally {
                             connections -= player
+                            seats[player]!!.joinable = true
                         }
                     } else {
                         close(
