@@ -1,8 +1,14 @@
 package xyz.xfqlittlefan.scorer.ui.composable.screen
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,8 +23,12 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -42,6 +52,7 @@ import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
 import xyz.xfqlittlefan.scorer.util.decodeFromJson
+import xyz.xfqlittlefan.scorer.util.generateQR
 import java.net.InetAddress
 import java.net.NetworkInterface
 
@@ -84,6 +95,7 @@ fun Connecting(
             AnimatedContent(targetState = windowSize) {
                 Text(
                     text = stringResource(if (it == WindowWidthSizeClass.Compact) R.string.page_content_connecting_title_0 else R.string.page_content_connecting_title_1),
+                    textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.titleLarge
                 )
             }
@@ -159,7 +171,7 @@ fun Connecting(
                 Column {
                     Spacer(Modifier.height(20.dp))
                     Button(
-                        onClick = viewModel::onRoomInfoButtonClick,
+                        onClick = viewModel::showRoomInfoDialog,
                         enabled = mainViewModel.server != null
                     ) {
                         Icon(
@@ -172,7 +184,13 @@ fun Connecting(
         }
         if (viewModel.showRoomInfoDialog) {
             AlertDialog(onDismissRequest = viewModel::dismissRoomInfoDialog, confirmButton = {
-                Button(onClick = { viewModel.onDeletingRoomButtonClick(mainViewModel) }) {
+                Button(
+                    onClick = { viewModel.onDeletingRoomButtonClick(mainViewModel) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
                     Text(stringResource(R.string.page_content_connecting_dialog_button_room_information_0))
                 }
             }, dismissButton = {
@@ -184,6 +202,7 @@ fun Connecting(
             }, text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     Text(stringResource(R.string.page_content_connecting_dialog_subtitle_room_information))
+                    Spacer(Modifier.height(10.dp))
                     viewModel.dialogAddresses.forEachIndexed { index, address ->
                         Box {
                             Text(text = stringResource(
@@ -197,13 +216,48 @@ fun Connecting(
                                 expanded = viewModel.addressMenuShowingIndex == index,
                                 onDismissRequest = viewModel::dismissAddressMenu
                             ) {
-                                DropdownMenuItem(
-                                    text = { Text("abc") }, onClick = viewModel::dismissAddressMenu
-                                )
+                                val addressString =
+                                    stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_copy)
+                                val context = LocalContext.current
+                                DropdownMenuItem(text = { Text(addressString) }, onClick = {
+                                    viewModel.onAddressMenuItemCopingClick(
+                                        context, addressString
+                                    )
+                                })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_share)) },
+                                    onClick = {
+                                        viewModel.onAddressMenuItemSharingClick(
+                                            context, addressString
+                                        )
+                                    })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_show_qr)) },
+                                    onClick = {
+                                        viewModel.showQRDialog(
+                                            addressString
+                                        )
+                                    })
                             }
                         }
-
+                        if (viewModel.dialogAddresses.lastIndex > index) {
+                            Spacer(Modifier.height(5.dp))
+                        }
                     }
+                }
+            })
+        }
+        if (viewModel.showQRDialog) {
+            AlertDialog(onDismissRequest = viewModel::dismissQRDialog, confirmButton = {
+                Button(onClick = viewModel::dismissQRDialog) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            }, title = {
+                Text(stringResource(R.string.page_content_connecting_dialog_title_address_qr))
+            }, text = {
+                if (viewModel.qr != null) {
+                    Image(
+                        bitmap = viewModel.qr!!.asImageBitmap(),
+                        contentDescription = stringResource(R.string.page_content_connecting_dialog_content_address_qr_description)
+                    )
                 }
             })
         }
@@ -261,7 +315,7 @@ class ConnectingScreenViewModel : ViewModel() {
     var dialogAddresses by mutableStateOf(listOf<Pair<String, String>>())
     var addressMenuShowingIndex by mutableStateOf<Int?>(null)
 
-    fun onRoomInfoButtonClick() {
+    fun showRoomInfoDialog() {
         showRoomInfoDialog = true
     }
 
@@ -273,8 +327,38 @@ class ConnectingScreenViewModel : ViewModel() {
         addressMenuShowingIndex = index
     }
 
+    fun onAddressMenuItemCopingClick(context: Context, address: String) {
+        val clipboard = getSystemService(context, ClipboardManager::class.java)
+        clipboard?.setPrimaryClip(ClipData.newPlainText("Scorer Address", address))
+    }
+
+    fun onAddressMenuItemSharingClick(context: Context, address: String) {
+        context.startActivity(
+            Intent.createChooser(
+                Intent().apply {
+                    action = Intent.ACTION_SEND
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, address)
+                }, null
+            )
+        )
+    }
+
     fun dismissAddressMenu() {
         addressMenuShowingIndex = null
+    }
+
+    var showQRDialog by mutableStateOf(false)
+    var qr by mutableStateOf<Bitmap?>(null)
+
+    fun showQRDialog(text: String) {
+        qr = generateQR(text)
+        showQRDialog = true
+    }
+
+    fun dismissQRDialog() {
+        showQRDialog = false
+        qr = null
     }
 
     fun onConnectingButtonClick(seat: Int, navController: NavController, viewModel: MainViewModel) {
@@ -318,7 +402,9 @@ class ConnectingScreenViewModel : ViewModel() {
 
     fun onDeletingRoomButtonClick(viewModel: MainViewModel) {
         showRoomInfoDialog = false
-        viewModel.server?.server?.stop()
+        viewModelScope.launch(Dispatchers.IO) {
+            viewModel.server?.server?.stop()
+        }
     }
 
     private fun NavController.navigateToMain(
