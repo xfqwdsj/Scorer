@@ -43,6 +43,7 @@ import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
 import xyz.xfqlittlefan.scorer.util.decodeFromJson
 import java.net.InetAddress
+import java.net.NetworkInterface
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -169,36 +170,43 @@ fun Connecting(
                 }
             }
         }
-        AlertDialog(onDismissRequest = viewModel::dismissRoomInfoDialog, confirmButton = {
-            Button(onClick = { viewModel.onDeletingRoomButtonClick(mainViewModel) }) {
-                Text(stringResource(R.string.page_content_connecting_dialog_button_room_information_0))
-            }
-        }, dismissButton = {
-            Button(onClick = viewModel::dismissRoomInfoDialog) {
-                Text(stringResource(android.R.string.cancel))
-            }
-        }, title = {
-            Text(stringResource(R.string.page_content_connecting_dialog_title_room_information))
-        }, text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text(stringResource(R.string.page_content_connecting_dialog_subtitle_room_information))
-                viewModel.dialogAddresses.forEachIndexed { index, address ->
-                    Text(text = stringResource(
-                        R.string.page_content_connecting_dialog_content_room_information,
-                        address.first,
-                        address.second
-                    ), modifier = Modifier.clickable {
-                        viewModel.addressMenuShowingIndex = index
-                    })
-                    DropdownMenu(
-                        expanded = viewModel.addressMenuShowingIndex == index,
-                        onDismissRequest = viewModel::dismissAddressMenu
-                    ) {
+        if (viewModel.showRoomInfoDialog) {
+            AlertDialog(onDismissRequest = viewModel::dismissRoomInfoDialog, confirmButton = {
+                Button(onClick = { viewModel.onDeletingRoomButtonClick(mainViewModel) }) {
+                    Text(stringResource(R.string.page_content_connecting_dialog_button_room_information_0))
+                }
+            }, dismissButton = {
+                Button(onClick = viewModel::dismissRoomInfoDialog) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }, title = {
+                Text(stringResource(R.string.page_content_connecting_dialog_title_room_information))
+            }, text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    Text(stringResource(R.string.page_content_connecting_dialog_subtitle_room_information))
+                    viewModel.dialogAddresses.forEachIndexed { index, address ->
+                        Box {
+                            Text(text = stringResource(
+                                R.string.page_content_connecting_dialog_content_room_information,
+                                address.first,
+                                address.second
+                            ), modifier = Modifier.clickable {
+                                viewModel.showAddressMenu(index)
+                            })
+                            DropdownMenu(
+                                expanded = viewModel.addressMenuShowingIndex == index,
+                                onDismissRequest = viewModel::dismissAddressMenu
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("abc") }, onClick = viewModel::dismissAddressMenu
+                                )
+                            }
+                        }
 
                     }
                 }
-            }
-        })
+            })
+        }
     }
 }
 
@@ -261,6 +269,10 @@ class ConnectingScreenViewModel : ViewModel() {
         showRoomInfoDialog = false
     }
 
+    fun showAddressMenu(index: Int) {
+        addressMenuShowingIndex = index
+    }
+
     fun dismissAddressMenu() {
         addressMenuShowingIndex = null
     }
@@ -272,6 +284,7 @@ class ConnectingScreenViewModel : ViewModel() {
     fun onCreatingRoomButtonClick(viewModel: MainViewModel) {
         viewModelScope.launch(Dispatchers.IO) {
             val launcher = RoomServerLauncher()
+            launcher.server.start()
             val host = InetAddress.getLocalHost().hostAddress!!
             val port = launcher.server.resolvedConnectors().first().port.toString()
             launcher.server.environment.monitor.subscribe(ApplicationStopped) {
@@ -285,9 +298,19 @@ class ConnectingScreenViewModel : ViewModel() {
                 addressMenuShowingIndex = null
                 onCancelingConnectionButtonClick()
             }
-            launcher.server.start()
             this@ConnectingScreenViewModel.host = host
             this@ConnectingScreenViewModel.port = port
+            val addressesTemp = mutableListOf<Pair<String, String>>()
+            val interfaces = NetworkInterface.getNetworkInterfaces()
+            for (networkInterface in interfaces) {
+                val ipAddresses = networkInterface.inetAddresses
+                for (ipAddress in ipAddresses) {
+                    if (!ipAddress.isAnyLocalAddress && !ipAddress.isLoopbackAddress && !ipAddress.isLinkLocalAddress) {
+                        addressesTemp += ipAddress.hostAddress to port
+                    }
+                }
+            }
+            dialogAddresses = addressesTemp
             viewModel.server = launcher
             onGettingSeatsButtonClick()
         }
