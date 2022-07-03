@@ -1,10 +1,14 @@
 package xyz.xfqlittlefan.scorer.ui.composable.screen
 
+import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -45,10 +49,7 @@ import xyz.xfqlittlefan.scorer.communication.*
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
-import xyz.xfqlittlefan.scorer.util.allBars
-import xyz.xfqlittlefan.scorer.util.decodeFromJson
-import xyz.xfqlittlefan.scorer.util.encodeToJson
-import xyz.xfqlittlefan.scorer.util.generateQR
+import xyz.xfqlittlefan.scorer.util.*
 import java.net.InetAddress
 import java.net.NetworkInterface
 
@@ -64,6 +65,7 @@ fun Connecting(
         windowSize = windowSize,
         title = stringResource(R.string.page_title_connecting),
         actions = {
+            val context = LocalContext.current
             IconButton(
                 onClick = { viewModel.onCreatingRoomButtonClick(mainViewModel) },
                 enabled = mainViewModel.server == null && !viewModel.showSeats
@@ -78,7 +80,7 @@ fun Connecting(
                     )
                 )
             }
-            IconButton(onClick = { }) {
+            IconButton(onClick = { viewModel.onScanningQRButtonClick(context, navController) }) {
                 Icon(
                     imageVector = Icons.Default.QrCodeScanner,
                     contentDescription = stringResource(R.string.page_content_connecting_action_scan_qr)
@@ -417,6 +419,18 @@ class ConnectingScreenViewModel : ViewModel() {
         showRoomInfoDialog = false
         viewModelScope.launch(Dispatchers.IO) {
             viewModel.server?.server?.stop()
+        }
+    }
+
+    fun onScanningQRButtonClick(context: Context, navController: NavController) {
+        if (context.compatCheckSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            navController.navigate("scanning")
+        } else {
+            (context as? ComponentActivity)?.registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+                if (it) {
+                    navController.navigate("scanning")
+                }
+            }?.launch(Manifest.permission.CAMERA)
         }
     }
 

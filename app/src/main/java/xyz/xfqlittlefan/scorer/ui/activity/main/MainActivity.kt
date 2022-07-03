@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import xyz.xfqlittlefan.scorer.ui.composable.screen.Connecting
 import xyz.xfqlittlefan.scorer.ui.composable.screen.Main
+import xyz.xfqlittlefan.scorer.ui.composable.screen.Scanning
 import xyz.xfqlittlefan.scorer.ui.theme.ScorerTheme
 
 class MainActivity : ComponentActivity() {
@@ -56,6 +57,9 @@ class MainActivity : ComponentActivity() {
                                 navController,
                                 windowSize
                             )
+                        }
+                        composable("scanning") {
+                            Scanning(navController, windowSize)
                         }
                     }
                 }
