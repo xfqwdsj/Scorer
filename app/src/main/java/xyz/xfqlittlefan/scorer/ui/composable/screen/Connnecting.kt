@@ -156,6 +156,7 @@ fun Connecting(
                     if (buttonVisibility[ButtonType.GettingSeats] == true) {
                         Button(
                             onClick = viewModel::onGettingSeatsButtonClick,
+                            modifier = Modifier.padding(horizontal = 5.dp),
                             enabled = buttonVisibility[ButtonType.GettingSeats] == true
                         ) {
                             Icon(
@@ -167,6 +168,7 @@ fun Connecting(
                     if (buttonVisibility[ButtonType.CancelingConnection] == true) {
                         Button(
                             onClick = viewModel::onCancelingConnectionButtonClick,
+                            modifier = Modifier.padding(horizontal = 5.dp),
                             enabled = buttonVisibility[ButtonType.CancelingConnection] == true
                         ) {
                             Icon(
@@ -178,6 +180,7 @@ fun Connecting(
                     if (buttonVisibility[ButtonType.ShowingRoomInfo] == true) {
                         Button(
                             onClick = viewModel::showRoomInfoDialog,
+                            modifier = Modifier.padding(horizontal = 5.dp),
                             enabled = buttonVisibility[ButtonType.ShowingRoomInfo] == true
                         ) {
                             Icon(
