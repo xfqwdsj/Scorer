@@ -5,10 +5,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import androidx.activity.ComponentActivity
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -37,6 +34,10 @@ import androidx.navigation.NavController
 import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.PermissionStatus
+import com.google.accompanist.permissions.rememberPermissionState
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -49,11 +50,18 @@ import xyz.xfqlittlefan.scorer.communication.*
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
-import xyz.xfqlittlefan.scorer.util.*
+import xyz.xfqlittlefan.scorer.util.allBars
+import xyz.xfqlittlefan.scorer.util.decodeFromJson
+import xyz.xfqlittlefan.scorer.util.encodeToJson
+import xyz.xfqlittlefan.scorer.util.generateQR
 import java.net.InetAddress
 import java.net.NetworkInterface
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalAnimationApi::class,
+    ExperimentalMaterial3Api::class,
+    ExperimentalPermissionsApi::class
+)
 @Composable
 fun Connecting(
     navController: NavController,
@@ -61,11 +69,14 @@ fun Connecting(
     viewModel: ConnectingScreenViewModel = viewModel()
 ) {
     val mainViewModel = LocalMainViewModel.current
+    val cameraPermissionState = rememberPermissionState(
+        Manifest.permission.CAMERA
+    )
+
     ScorerScaffold(navController = navController,
         windowSize = windowSize,
         title = stringResource(R.string.page_title_connecting),
         actions = {
-            val context = LocalContext.current
             IconButton(
                 onClick = { viewModel.onCreatingRoomButtonClick(mainViewModel) },
                 enabled = mainViewModel.server == null && !viewModel.showSeats
@@ -80,11 +91,21 @@ fun Connecting(
                     )
                 )
             }
-            IconButton(onClick = { viewModel.onScanningQRButtonClick(context, navController) }) {
-                Icon(
-                    imageVector = Icons.Default.QrCodeScanner,
-                    contentDescription = stringResource(R.string.page_content_connecting_action_scan_qr)
-                )
+            if (cameraPermissionState.status == PermissionStatus.Granted) {
+                IconButton(onClick = { viewModel.onScanningQRButtonClick(navController) }) {
+                    Icon(
+                        imageVector = Icons.Default.QrCodeScanner,
+                        contentDescription = stringResource(R.string.page_content_connecting_action_scan_qr)
+                    )
+                }
+            } else {
+                IconButton(onClick = viewModel::onRequestingPermissionButtonClick) {
+                    Icon(
+                        imageVector = Icons.Default.Warning, contentDescription = stringResource(
+                            R.string.page_content_connecting_action_request_permission
+                        )
+                    )
+                }
             }
         }) {
         Column(
@@ -276,6 +297,25 @@ fun Connecting(
                 }
             })
         }
+        if (viewModel.showRequestPermissionRationaleDialog) {
+            AlertDialog(onDismissRequest = viewModel::dismissRequestPermissionRationaleDialog,
+                confirmButton = {
+                    Button(onClick = { viewModel.requestPermission(cameraPermissionState) }) {
+                        Text(stringResource(android.R.string.ok))
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = viewModel::dismissRequestPermissionRationaleDialog) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                },
+                title = {
+                    Text(stringResource(R.string.page_content_connecting_dialog_title_request_permission_rationale))
+                },
+                text = {
+                    Text(stringResource(R.string.page_content_connecting_dialog_content_request_permission_rationale))
+                })
+        }
     }
 }
 
@@ -422,16 +462,23 @@ class ConnectingScreenViewModel : ViewModel() {
         }
     }
 
-    fun onScanningQRButtonClick(context: Context, navController: NavController) {
-        if (context.compatCheckSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            navController.navigate("scanning")
-        } else {
-            (context as? ComponentActivity)?.registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-                if (it) {
-                    navController.navigate("scanning")
-                }
-            }?.launch(Manifest.permission.CAMERA)
-        }
+    var showRequestPermissionRationaleDialog by mutableStateOf(false)
+
+    fun onRequestingPermissionButtonClick() {
+        showRequestPermissionRationaleDialog = true
+    }
+
+    fun dismissRequestPermissionRationaleDialog() {
+        showRequestPermissionRationaleDialog = false
+    }
+
+    fun onScanningQRButtonClick(navController: NavController) {
+        navController.navigate("scanning")
+    }
+
+    @OptIn(ExperimentalPermissionsApi::class)
+    fun requestPermission(permissionState: PermissionState) {
+        permissionState.launchPermissionRequest()
     }
 
     private fun NavController.navigateToMain(

@@ -6,6 +6,7 @@
     <string name="page_content_connecting_action_create_disabled_created">无法创建房间，因为房间已创建</string>
     <string name="page_content_connecting_action_create_disabled_connected">无法创建房间，因为正连接到其他房间</string>
     <string name="page_content_connecting_action_scan_qr">扫描二维码以输入房间地址</string>
+    <string name="page_content_connecting_action_request_permission">赋予相机权限以通过扫描二维码的方式输入房间地址</string>
     <string name="page_content_connecting_title_0">连接到一个房间或点击右上角创建一个</string>
     <string name="page_content_connecting_title_1">连接到一个房间或点击左上角创建一个</string>
     <string name="page_content_connecting_text_field_host_label">房间地址</string>
@@ -22,6 +23,9 @@
     <string name="page_content_connecting_dialog_button_room_information_0">删除房间</string>
     <string name="page_content_connecting_dialog_title_address_qr">房间地址二维码</string>
     <string name="page_content_connecting_dialog_content_address_qr_description">房间地址二维码</string>
+    <string name="page_content_connecting_dialog_title_request_permission_rationale">请求相机权限</string>
+    <string name="page_content_connecting_dialog_content_request_permission_rationale">我们需要使用相机权限提供扫描二维码功能</string>
+    <string name="page_content_connecting_dialog_content_request_permission_rationale_failed">我们需要使用相机权限提供扫描二维码功能，但是权限获取失败了</string>
     <string name="page_title_main">主页</string>
     <string name="page_content_main_nav_bar_title_room">房间</string>
     <string name="page_content_main_nav_bar_title_management">管理</string>

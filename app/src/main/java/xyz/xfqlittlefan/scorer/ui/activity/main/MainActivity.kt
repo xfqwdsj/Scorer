@@ -3,9 +3,11 @@ package xyz.xfqlittlefan.scorer.ui.activity.main
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -28,6 +30,7 @@ class MainActivity : ComponentActivity() {
                 val viewModel = viewModel<MainViewModel>()
                 val navController = rememberNavController()
                 val windowSize = calculateWindowSizeClass(activity = this).widthSizeClass
+
                 CompositionLocalProvider(LocalMainViewModel provides viewModel) {
                     NavHost(navController = navController, startDestination = "connecting") {
                         composable("connecting") {
