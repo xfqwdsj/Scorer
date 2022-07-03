@@ -399,7 +399,7 @@ class ConnectingScreenViewModel : ViewModel() {
             for (networkInterface in interfaces) {
                 val ipAddresses = networkInterface.inetAddresses
                 for (ipAddress in ipAddresses) {
-                    if (!ipAddress.isAnyLocalAddress && !ipAddress.isLoopbackAddress) {
+                    if (!ipAddress.isLoopbackAddress && !ipAddress.isLinkLocalAddress) {
                         addressesTemp += ipAddress.hostAddress to port
                     }
                 }
