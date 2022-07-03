@@ -34,10 +34,7 @@ import androidx.navigation.NavController
 import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
-import com.google.accompanist.permissions.PermissionStatus
-import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -297,7 +294,7 @@ fun Connecting(
                 }
             })
         }
-        if (viewModel.showRequestPermissionRationaleDialog) {
+        if (viewModel.showRequestPermissionRationaleDialog && cameraPermissionState.status is PermissionStatus.Denied) {
             AlertDialog(onDismissRequest = viewModel::dismissRequestPermissionRationaleDialog,
                 confirmButton = {
                     Button(onClick = { viewModel.requestPermission(cameraPermissionState) }) {
@@ -313,7 +310,15 @@ fun Connecting(
                     Text(stringResource(R.string.page_content_connecting_dialog_title_request_permission_rationale))
                 },
                 text = {
-                    Text(stringResource(R.string.page_content_connecting_dialog_content_request_permission_rationale))
+                    Text(
+                        stringResource(
+                            if (cameraPermissionState.status.shouldShowRationale) {
+                                R.string.page_content_connecting_dialog_content_request_permission_rationale
+                            } else {
+                                R.string.page_content_connecting_dialog_content_request_permission_rationale_failed
+                            }
+                        )
+                    )
                 })
         }
     }
@@ -478,6 +483,7 @@ class ConnectingScreenViewModel : ViewModel() {
 
     @OptIn(ExperimentalPermissionsApi::class)
     fun requestPermission(permissionState: PermissionState) {
+        showRequestPermissionRationaleDialog = false
         permissionState.launchPermissionRequest()
     }
 
