@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import xyz.xfqlittlefan.scorer.R
+import xyz.xfqlittlefan.scorer.util.allBars
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,14 +41,14 @@ fun ScorerScaffold(
 ) {
     Scaffold(topBar = {
         AnimatedVisibility(
-            visible = windowSize == WindowWidthSizeClass.Compact, enter = expandVertically(), exit = shrinkVertically()
+            visible = windowSize == WindowWidthSizeClass.Compact,
+            enter = expandVertically(),
+            exit = shrinkVertically()
         ) {
             SmallTopAppBar(title = {
                 Text(title)
             }, modifier = Modifier.windowInsetsPadding(
-                WindowInsets.systemBars.only(
-                    WindowInsetsSides.Horizontal + WindowInsetsSides.Top
-                )
+                WindowInsets.allBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
             ), navigationIcon = navigationIcon, actions = { actions() })
         }
     }, bottomBar = {
@@ -72,7 +73,7 @@ fun ScorerScaffold(
                 visible = windowSize != WindowWidthSizeClass.Compact
             ) {
                 NavigationRail(modifier = Modifier.windowInsetsPadding(
-                    WindowInsets.systemBars.only(
+                    WindowInsets.allBars.only(
                         WindowInsetsSides.Start + WindowInsetsSides.Vertical
                     )
                 ), header = {

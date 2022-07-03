@@ -45,6 +45,7 @@ import xyz.xfqlittlefan.scorer.communication.*
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
+import xyz.xfqlittlefan.scorer.util.allBars
 import xyz.xfqlittlefan.scorer.util.decodeFromJson
 import xyz.xfqlittlefan.scorer.util.encodeToJson
 import xyz.xfqlittlefan.scorer.util.generateQR
@@ -87,7 +88,7 @@ fun Connecting(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+                .windowInsetsPadding(WindowInsets.allBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp),
             verticalArrangement = Arrangement.Center,
@@ -140,6 +141,7 @@ fun Connecting(
                     }
                 }
             }
+            Spacer(Modifier.height(20.dp))
             AnimatedContent(
                 targetState = mapOf(
                     ButtonType.GettingSeats to !viewModel.showSeats,
