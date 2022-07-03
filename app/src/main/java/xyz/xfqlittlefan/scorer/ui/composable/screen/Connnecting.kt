@@ -34,7 +34,10 @@ import androidx.navigation.NavController
 import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
-import com.google.accompanist.permissions.*
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.PermissionStatus
+import com.google.accompanist.permissions.rememberPermissionState
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -311,13 +314,7 @@ fun Connecting(
                 },
                 text = {
                     Text(
-                        stringResource(
-                            if (cameraPermissionState.status.shouldShowRationale) {
-                                R.string.page_content_connecting_dialog_content_request_permission_rationale
-                            } else {
-                                R.string.page_content_connecting_dialog_content_request_permission_rationale_failed
-                            }
-                        )
+                        stringResource(R.string.page_content_connecting_dialog_content_request_permission_rationale)
                     )
                 })
         }

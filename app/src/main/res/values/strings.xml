@@ -25,7 +25,6 @@
     <string name="page_content_connecting_dialog_content_address_qr_description">房间地址二维码</string>
     <string name="page_content_connecting_dialog_title_request_permission_rationale">请求相机权限</string>
     <string name="page_content_connecting_dialog_content_request_permission_rationale">我们需要使用相机权限提供扫描二维码功能</string>
-    <string name="page_content_connecting_dialog_content_request_permission_rationale_failed">我们需要使用相机权限提供扫描二维码功能，但是权限获取失败了</string>
     <string name="page_title_main">主页</string>
     <string name="page_content_main_nav_bar_title_room">房间</string>
     <string name="page_content_main_nav_bar_title_management">管理</string>
