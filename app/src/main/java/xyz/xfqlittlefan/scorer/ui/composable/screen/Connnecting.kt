@@ -14,10 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.*
@@ -73,11 +70,17 @@ fun Connecting(
                 Icon(
                     imageVector = Icons.Default.Add, contentDescription = stringResource(
                         when {
-                            mainViewModel.server != null -> R.string.page_content_connecting_button_create_disabled_created
-                            viewModel.seats != null -> R.string.page_content_connecting_button_create_disabled_connected
-                            else -> R.string.page_content_connecting_button_create
+                            mainViewModel.server != null -> R.string.page_content_connecting_action_create_disabled_created
+                            viewModel.seats != null -> R.string.page_content_connecting_action_create_disabled_connected
+                            else -> R.string.page_content_connecting_action_create
                         }
                     )
+                )
+            }
+            IconButton(onClick = { }) {
+                Icon(
+                    imageVector = Icons.Default.QrCodeScanner,
+                    contentDescription = stringResource(R.string.page_content_connecting_action_scan_qr)
                 )
             }
         }) {

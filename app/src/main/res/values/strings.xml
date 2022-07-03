@@ -2,9 +2,10 @@
     <string name="app_name">自负盈亏</string>
     <string name="action_back">返回</string>
     <string name="page_title_connecting">连接</string>
-    <string name="page_content_connecting_button_create">创建一个房间</string>
-    <string name="page_content_connecting_button_create_disabled_created">无法创建房间，因为房间已创建</string>
-    <string name="page_content_connecting_button_create_disabled_connected">无法创建房间，因为正连接到其他房间</string>
+    <string name="page_content_connecting_action_create">创建一个房间</string>
+    <string name="page_content_connecting_action_create_disabled_created">无法创建房间，因为房间已创建</string>
+    <string name="page_content_connecting_action_create_disabled_connected">无法创建房间，因为正连接到其他房间</string>
+    <string name="page_content_connecting_action_scan_qr">扫描二维码以输入房间地址</string>
     <string name="page_content_connecting_title_0">连接到一个房间或点击右上角创建一个</string>
     <string name="page_content_connecting_title_1">连接到一个房间或点击左上角创建一个</string>
     <string name="page_content_connecting_text_field_host_label">房间地址</string>
