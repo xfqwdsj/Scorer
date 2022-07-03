@@ -41,7 +41,7 @@ data class Message(
 enum class MessageParamContentType { String, Int }
 
 /**
- * 消息的额外参数
+ * 消息的额外参数。
  *
  * @param type 参数类型
  * @param intContent 整型内容
@@ -61,3 +61,12 @@ data class MessageParam(
 }
 
 data class ScoreChangingData(val player: Int, val count: Int)
+
+/**
+ * 房间地址二维码信息。
+ *
+ * @param address 房间地址。
+ * @param port 房间端口。
+ */
+@kotlinx.serialization.Serializable
+data class RoomAddressQRCode(val address: String, val port: Int)

@@ -44,14 +44,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import xyz.xfqlittlefan.scorer.R
-import xyz.xfqlittlefan.scorer.communication.CLIENT_VERSION
-import xyz.xfqlittlefan.scorer.communication.RoomServerLauncher
-import xyz.xfqlittlefan.scorer.communication.WebSocketServerInfo
-import xyz.xfqlittlefan.scorer.communication.client
+import xyz.xfqlittlefan.scorer.communication.*
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
 import xyz.xfqlittlefan.scorer.util.decodeFromJson
+import xyz.xfqlittlefan.scorer.util.encodeToJson
 import xyz.xfqlittlefan.scorer.util.generateQR
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -139,45 +137,49 @@ fun Connecting(
                     }
                 }
             }
-            AnimatedVisibility(visible = !viewModel.showSeats) {
-                Column {
-                    Spacer(Modifier.height(20.dp))
-                    Button(
-                        onClick = viewModel::onGettingSeatsButtonClick,
-                        enabled = !viewModel.showSeats
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Done,
-                            contentDescription = stringResource(R.string.page_content_connecting_button_get_seats)
-                        )
+            AnimatedContent(
+                targetState = mapOf(
+                    ButtonType.GettingSeats to !viewModel.showSeats,
+                    ButtonType.CancelingConnection to (viewModel.gettingSeatsJob != null || viewModel.showSeats),
+                    ButtonType.ShowingRoomInfo to (mainViewModel.server != null)
+                )
+            ) { buttonVisibility ->
+                FlowRow(
+                    mainAxisAlignment = FlowMainAxisAlignment.Center,
+                    crossAxisAlignment = FlowCrossAxisAlignment.Center
+                ) {
+                    if (buttonVisibility[ButtonType.GettingSeats] == true) {
+                        Button(
+                            onClick = viewModel::onGettingSeatsButtonClick,
+                            enabled = buttonVisibility[ButtonType.GettingSeats] == true
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Done,
+                                contentDescription = stringResource(R.string.page_content_connecting_button_get_seats)
+                            )
+                        }
                     }
-                }
-            }
-            AnimatedVisibility(visible = viewModel.gettingSeatsJob != null || viewModel.showSeats) {
-                Column {
-                    Spacer(Modifier.height(20.dp))
-                    Button(
-                        onClick = viewModel::onCancelingConnectionButtonClick,
-                        enabled = viewModel.gettingSeatsJob != null || viewModel.showSeats
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Cancel,
-                            contentDescription = stringResource(R.string.page_content_connecting_button_cancel_connection)
-                        )
+                    if (buttonVisibility[ButtonType.CancelingConnection] == true) {
+                        Button(
+                            onClick = viewModel::onCancelingConnectionButtonClick,
+                            enabled = buttonVisibility[ButtonType.CancelingConnection] == true
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Cancel,
+                                contentDescription = stringResource(R.string.page_content_connecting_button_cancel_connection)
+                            )
+                        }
                     }
-                }
-            }
-            AnimatedVisibility(visible = mainViewModel.server != null) {
-                Column {
-                    Spacer(Modifier.height(20.dp))
-                    Button(
-                        onClick = viewModel::showRoomInfoDialog,
-                        enabled = mainViewModel.server != null
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = stringResource(R.string.page_content_connecting_button_room_information)
-                        )
+                    if (buttonVisibility[ButtonType.ShowingRoomInfo] == true) {
+                        Button(
+                            onClick = viewModel::showRoomInfoDialog,
+                            enabled = buttonVisibility[ButtonType.ShowingRoomInfo] == true
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = stringResource(R.string.page_content_connecting_button_room_information)
+                            )
+                        }
                     }
                 }
             }
@@ -235,7 +237,7 @@ fun Connecting(
                                 DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_show_qr)) },
                                     onClick = {
                                         viewModel.showQRDialog(
-                                            addressString
+                                            address.first, address.second
                                         )
                                         viewModel.dismissAddressMenu()
                                     })
@@ -315,7 +317,7 @@ class ConnectingScreenViewModel : ViewModel() {
     }
 
     var showRoomInfoDialog by mutableStateOf(false)
-    var dialogAddresses by mutableStateOf(listOf<Pair<String, String>>())
+    var dialogAddresses by mutableStateOf(listOf<Pair<String, Int>>())
     var addressMenuShowingIndex by mutableStateOf<Int?>(null)
 
     fun showRoomInfoDialog() {
@@ -354,8 +356,8 @@ class ConnectingScreenViewModel : ViewModel() {
     var showQRDialog by mutableStateOf(false)
     var qr by mutableStateOf<Bitmap?>(null)
 
-    fun showQRDialog(text: String) {
-        qr = generateQR(text)
+    fun showQRDialog(address: String, port: Int) {
+        qr = generateQR(RoomAddressQRCode(address, port).encodeToJson())
         showQRDialog = true
     }
 
@@ -373,10 +375,10 @@ class ConnectingScreenViewModel : ViewModel() {
             val launcher = RoomServerLauncher()
             launcher.server.start()
             val host = InetAddress.getLocalHost().hostAddress!!
-            val port = launcher.server.resolvedConnectors().first().port.toString()
+            val port = launcher.server.resolvedConnectors().first().port
             launcher.server.environment.monitor.subscribe(ApplicationStopped) {
                 viewModel.server = null
-                if (this@ConnectingScreenViewModel.host == host && this@ConnectingScreenViewModel.port == port) {
+                if (this@ConnectingScreenViewModel.host == host && this@ConnectingScreenViewModel.port == port.toString()) {
                     this@ConnectingScreenViewModel.host = ""
                     this@ConnectingScreenViewModel.port = ""
                 }
@@ -386,13 +388,13 @@ class ConnectingScreenViewModel : ViewModel() {
                 onCancelingConnectionButtonClick()
             }
             this@ConnectingScreenViewModel.host = host
-            this@ConnectingScreenViewModel.port = port
-            val addressesTemp = mutableListOf<Pair<String, String>>()
+            this@ConnectingScreenViewModel.port = port.toString()
+            val addressesTemp = mutableListOf<Pair<String, Int>>()
             val interfaces = NetworkInterface.getNetworkInterfaces()
             for (networkInterface in interfaces) {
                 val ipAddresses = networkInterface.inetAddresses
                 for (ipAddress in ipAddresses) {
-                    if (!ipAddress.isAnyLocalAddress && !ipAddress.isLoopbackAddress && !ipAddress.isLinkLocalAddress) {
+                    if (!ipAddress.isAnyLocalAddress && !ipAddress.isLoopbackAddress) {
                         addressesTemp += ipAddress.hostAddress to port
                     }
                 }
@@ -422,4 +424,8 @@ class ConnectingScreenViewModel : ViewModel() {
             launchSingleTop = true
         }
     }
+}
+
+enum class ButtonType {
+    GettingSeats, CancelingConnection, Connecting, ShowingRoomInfo
 }
