@@ -13,9 +13,7 @@ fun Scanning(
     windowSize: WindowWidthSizeClass,
     viewModel: ScanningScreenViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
-    AndroidView(factory = {
-        PreviewView(it)
-    })
+
 }
 
 class ScanningScreenViewModel : ViewModel() {
