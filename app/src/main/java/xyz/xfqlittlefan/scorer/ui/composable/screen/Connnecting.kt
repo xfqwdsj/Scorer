@@ -292,7 +292,8 @@ fun Connecting(
                 if (viewModel.qr != null) {
                     Image(
                         bitmap = viewModel.qr!!.asImageBitmap(),
-                        contentDescription = stringResource(R.string.page_content_connecting_dialog_content_address_qr_description)
+                        contentDescription = stringResource(R.string.page_content_connecting_dialog_content_address_qr_description),
+                        modifier = Modifier.width(IntrinsicSize.Min)
                     )
                 }
             })
