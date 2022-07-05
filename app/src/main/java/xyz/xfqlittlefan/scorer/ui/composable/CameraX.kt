@@ -76,8 +76,12 @@ fun CameraX(
                     onSavingPictureAvailable(imageCapture::takePicture)
                 }
             }
-            if (imageAnalysisBuilder != null && imageAnalyzer != null) {
-                useCases += ImageAnalysis.Builder().apply(imageAnalysisBuilder).build().apply {
+            if (imageAnalyzer != null) {
+                useCases += ImageAnalysis.Builder().apply {
+                    if (imageAnalysisBuilder != null) {
+                        apply(imageAnalysisBuilder)
+                    }
+                }.build().apply {
                     setAnalyzer(executor, imageAnalyzer)
                 }
             }
