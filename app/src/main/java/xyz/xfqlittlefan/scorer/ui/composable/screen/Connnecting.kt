@@ -50,10 +50,7 @@ import xyz.xfqlittlefan.scorer.communication.*
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
-import xyz.xfqlittlefan.scorer.util.allBars
-import xyz.xfqlittlefan.scorer.util.decodeFromJson
-import xyz.xfqlittlefan.scorer.util.encodeToJson
-import xyz.xfqlittlefan.scorer.util.generateQR
+import xyz.xfqlittlefan.scorer.util.*
 import java.net.InetAddress
 import java.net.NetworkInterface
 
@@ -343,16 +340,20 @@ class ConnectingScreenViewModel : ViewModel() {
 
     fun onGettingSeatsButtonClick() {
         gettingSeatsJob = viewModelScope.launch(Dispatchers.IO) {
-            val info = client.get {
-                url {
-                    protocol = URLProtocol.HTTP
-                    host = this@ConnectingScreenViewModel.host
-                    port = this@ConnectingScreenViewModel.port.toInt()
-                    appendPathSegments("join", CLIENT_VERSION.toString())
-                }
-            }.body<String>().decodeFromJson<WebSocketServerInfo>()
-            showSeats = true
-            seats = info.seats
+            try {
+                val info = client.get {
+                    url {
+                        protocol = URLProtocol.HTTP
+                        host = this@ConnectingScreenViewModel.host
+                        port = this@ConnectingScreenViewModel.port.toInt()
+                        appendPathSegments("join", CLIENT_VERSION.toString())
+                    }
+                }.body<String>().decodeFromJson<WebSocketServerInfo>()
+                showSeats = true
+                seats = info.seats
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
         }
         gettingSeatsJob?.invokeOnCompletion {
             gettingSeatsJob = null
