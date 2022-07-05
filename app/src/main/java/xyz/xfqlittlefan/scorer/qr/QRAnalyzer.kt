@@ -4,18 +4,20 @@ import android.graphics.ImageFormat
 import android.os.Build
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import com.google.zxing.BinaryBitmap
-import com.google.zxing.NotFoundException
-import com.google.zxing.PlanarYUVLuminanceSource
+import com.google.zxing.*
 import com.google.zxing.common.HybridBinarizer
-import com.google.zxing.qrcode.QRCodeReader
 import xyz.xfqlittlefan.scorer.util.LogUtil
 import java.nio.ByteBuffer
 
-class QRAnalyzer(private val onResult: (qr: com.google.zxing.Result) -> Unit) :
+class QRAnalyzer(private val onResult: (qr: Result) -> Unit) :
     ImageAnalysis.Analyzer {
     private val yuvFormat = mutableListOf(ImageFormat.YUV_420_888)
-    private val reader = QRCodeReader()
+    private val reader = MultiFormatReader().apply {
+        val map = mapOf(
+            DecodeHintType.POSSIBLE_FORMATS to arrayListOf(BarcodeFormat.QR_CODE)
+        )
+        setHints(map)
+    }
 
     init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -38,6 +40,12 @@ class QRAnalyzer(private val onResult: (qr: com.google.zxing.Result) -> Unit) :
         try {
             onResult(reader.decode(binaryBitmap))
         } catch (e: NotFoundException) {
+            e.printStackTrace()
+        } catch (e: FormatException) {
+            e.printStackTrace()
+        } catch (e: ChecksumException) {
+            e.printStackTrace()
+        } catch (e: Throwable) {
             e.printStackTrace()
         }
         image.close()
