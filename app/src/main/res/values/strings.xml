@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">自负盈亏</string>
     <string name="action_back">返回</string>
+    <string name="action_close">关闭</string>
     <string name="page_title_connecting">连接</string>
     <string name="page_content_connecting_action_create">创建一个房间</string>
     <string name="page_content_connecting_action_create_disabled_created">无法创建房间，因为房间已创建</string>
@@ -28,6 +29,7 @@
     <string name="page_title_main">主页</string>
     <string name="page_content_main_nav_bar_title_room">房间</string>
     <string name="page_content_main_nav_bar_title_management">管理</string>
+    <string name="page_title_scanner">扫描二维码</string>
     <string name="connection_message_new_connection">%s 进入了房间</string>
     <string name="connection_message_someone_leaving">%s 离开了房间</string>
     <string name="connection_message_someone_closing">%s 断开了连接</string>

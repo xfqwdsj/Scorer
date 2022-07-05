@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
 import xyz.xfqlittlefan.scorer.R
 import xyz.xfqlittlefan.scorer.util.allBars
@@ -17,22 +18,24 @@ import xyz.xfqlittlefan.scorer.util.allBars
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScorerScaffold(
-    navController: NavController,
+    navController: NavController? = null,
     windowSize: WindowWidthSizeClass,
     title: String,
     actions: @Composable () -> Unit = {},
     navigationIcon: @Composable () -> Unit = {
-        AnimatedVisibility(
-            visible = navController.graph.arguments.isNotEmpty(),
-            enter = expandHorizontally(),
-            exit = shrinkHorizontally()
-        ) {
-            IconButton(onClick = { navController.navigateUp() }) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack, contentDescription = stringResource(
-                        R.string.action_back
+        if (navController != null) {
+            AnimatedVisibility(
+                visible = navController.graph.arguments.isNotEmpty(),
+                enter = expandHorizontally(),
+                exit = shrinkHorizontally()
+            ) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack, contentDescription = stringResource(
+                            R.string.action_back
+                        )
                     )
-                )
+                }
             }
         }
     },
@@ -78,7 +81,7 @@ fun ScorerScaffold(
                     )
                 ), header = {
                     navigationIcon()
-                    Text(title)
+                    Text(text = title, textAlign = TextAlign.Center)
                     actions()
                 }) {
                     if (navigationItems != null) {

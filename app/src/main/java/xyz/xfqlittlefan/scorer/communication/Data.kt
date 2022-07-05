@@ -65,8 +65,8 @@ data class ScoreChangingData(val player: Int, val count: Int)
 /**
  * 房间地址二维码信息。
  *
- * @param address 房间地址。
+ * @param host 房间主机。
  * @param port 房间端口。
  */
 @kotlinx.serialization.Serializable
-data class RoomAddressQRCode(val address: String, val port: Int)
+data class RoomAddressQRCode(val host: String, val port: Int)

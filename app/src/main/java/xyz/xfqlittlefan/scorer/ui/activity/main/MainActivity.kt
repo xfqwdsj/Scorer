@@ -3,11 +3,9 @@ package xyz.xfqlittlefan.scorer.ui.activity.main
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.SideEffect
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -17,7 +15,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import xyz.xfqlittlefan.scorer.ui.composable.screen.Connecting
 import xyz.xfqlittlefan.scorer.ui.composable.screen.Main
-import xyz.xfqlittlefan.scorer.ui.composable.screen.Scanning
 import xyz.xfqlittlefan.scorer.ui.theme.ScorerTheme
 
 class MainActivity : ComponentActivity() {
@@ -60,9 +57,6 @@ class MainActivity : ComponentActivity() {
                                 navController,
                                 windowSize
                             )
-                        }
-                        composable("scanning") {
-                            Scanning(navController, windowSize)
                         }
                     }
                 }

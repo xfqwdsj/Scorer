@@ -1,11 +1,15 @@
 package xyz.xfqlittlefan.scorer.ui.composable.screen
 
 import android.Manifest
+import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -50,6 +54,7 @@ import xyz.xfqlittlefan.scorer.R
 import xyz.xfqlittlefan.scorer.communication.*
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
+import xyz.xfqlittlefan.scorer.ui.activity.scanner.ScannerActivity
 import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
 import xyz.xfqlittlefan.scorer.util.*
 import java.net.InetAddress
@@ -70,6 +75,13 @@ fun Connecting(
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
     )
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.getStringExtra("result")?.let { viewModel.onQRScanned(it) }
+        }
+    }
 
     ScorerScaffold(navController = navController,
         windowSize = windowSize,
@@ -90,7 +102,8 @@ fun Connecting(
                 )
             }
             if (cameraPermissionState.status == PermissionStatus.Granted) {
-                IconButton(onClick = { viewModel.onScanningQRButtonClick(navController) }) {
+                val context = LocalContext.current
+                IconButton(onClick = { viewModel.onScanningQRButtonClick(context, launcher) }) {
                     Icon(
                         imageVector = Icons.Default.QrCodeScanner,
                         contentDescription = stringResource(R.string.page_content_connecting_action_scan_qr)
@@ -322,12 +335,11 @@ fun Connecting(
 
 class ConnectingScreenViewModel : ViewModel() {
     var host by mutableStateOf("")
+    var port by mutableStateOf("")
 
     fun onHostChange(newValue: String) {
         host = newValue
     }
-
-    var port by mutableStateOf("")
 
     fun onPortChange(newValue: String) {
         port = newValue
@@ -340,6 +352,11 @@ class ConnectingScreenViewModel : ViewModel() {
     var gettingSeatsJob: Job? = null
 
     fun onGettingSeatsButtonClick() {
+        if (gettingSeatsJob != null) {
+            LogUtil.d("Already getting seats.", "Scorer.GettingSeats")
+            return
+        }
+
         gettingSeatsJob = viewModelScope.launch(Dispatchers.IO) {
             try {
                 val info = client.get {
@@ -383,8 +400,19 @@ class ConnectingScreenViewModel : ViewModel() {
         showRoomInfoDialog = false
     }
 
+    fun onDeletingRoomButtonClick(viewModel: MainViewModel) {
+        showRoomInfoDialog = false
+        viewModelScope.launch(Dispatchers.IO) {
+            viewModel.server?.server?.stop()
+        }
+    }
+
     fun showAddressMenu(index: Int) {
         addressMenuShowingIndex = index
+    }
+
+    fun dismissAddressMenu() {
+        addressMenuShowingIndex = null
     }
 
     fun onAddressMenuItemCopingClick(context: Context, address: String) {
@@ -402,10 +430,6 @@ class ConnectingScreenViewModel : ViewModel() {
                 }, null
             )
         )
-    }
-
-    fun dismissAddressMenu() {
-        addressMenuShowingIndex = null
     }
 
     var showQRDialog by mutableStateOf(false)
@@ -460,10 +484,20 @@ class ConnectingScreenViewModel : ViewModel() {
         }
     }
 
-    fun onDeletingRoomButtonClick(viewModel: MainViewModel) {
-        showRoomInfoDialog = false
-        viewModelScope.launch(Dispatchers.IO) {
-            viewModel.server?.server?.stop()
+    fun onScanningQRButtonClick(context: Context, launcher: ActivityResultLauncher<Intent>) {
+        launcher.launch(Intent(context, ScannerActivity::class.java))
+    }
+
+    fun onQRScanned(text: String) {
+        try {
+            val info = text.decodeFromJson<RoomAddressQRCode>()
+            host = info.host
+            port = info.port.toString()
+            onGettingSeatsButtonClick()
+        } catch (e: SerializationException) {
+            e.printStackTrace()
+        } catch (e: Throwable) {
+            e.printStackTrace()
         }
     }
 
@@ -475,22 +509,6 @@ class ConnectingScreenViewModel : ViewModel() {
 
     fun dismissRequestPermissionRationaleDialog() {
         showRequestPermissionRationaleDialog = false
-    }
-
-    fun onScanningQRButtonClick(navController: NavController) {
-        navController.registerResult<String>("qr_result") {
-            try {
-                val info = it.decodeFromJson<RoomAddressQRCode>()
-                host = info.address
-                port = info.port.toString()
-                onGettingSeatsButtonClick()
-            } catch (e: SerializationException) {
-                e.printStackTrace()
-            } catch (e: Throwable) {
-                e.printStackTrace()
-            }
-        }
-        navController.navigate("scanning")
     }
 
     @OptIn(ExperimentalPermissionsApi::class)
