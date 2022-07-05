@@ -9,6 +9,7 @@ import com.google.zxing.NotFoundException
 import com.google.zxing.PlanarYUVLuminanceSource
 import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.qrcode.QRCodeReader
+import xyz.xfqlittlefan.scorer.util.LogUtil
 import java.nio.ByteBuffer
 
 class QRAnalyzer(private val onResult: (qr: com.google.zxing.Result) -> Unit) :
@@ -25,6 +26,7 @@ class QRAnalyzer(private val onResult: (qr: com.google.zxing.Result) -> Unit) :
     override fun analyze(image: ImageProxy) {
         if (image.format !in yuvFormat) {
             image.close()
+            LogUtil.w("QRAnalyzer", "Unsupported image format: ${image.format}")
             return
         }
 
