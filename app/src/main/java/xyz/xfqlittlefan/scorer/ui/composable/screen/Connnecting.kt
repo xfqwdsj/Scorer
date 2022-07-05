@@ -6,14 +6,12 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,7 +23,7 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -55,7 +53,9 @@ import xyz.xfqlittlefan.scorer.communication.*
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.scanner.ScannerActivity
+import xyz.xfqlittlefan.scorer.ui.composable.QRCode
 import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
+import xyz.xfqlittlefan.scorer.ui.theme.LocalDarkTheme
 import xyz.xfqlittlefan.scorer.util.*
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -300,12 +300,21 @@ fun Connecting(
             }, title = {
                 Text(stringResource(R.string.page_content_connecting_dialog_title_address_qr))
             }, text = {
-                if (viewModel.qr != null) {
-                    Image(
-                        bitmap = viewModel.qr!!.asImageBitmap(),
-                        contentDescription = stringResource(R.string.page_content_connecting_dialog_content_address_qr_description),
-                        modifier = Modifier.width(IntrinsicSize.Min)
-                    )
+                if (viewModel.qrContent != null) {
+                    Box(Modifier.fillMaxSize()) {
+                        QRCode(
+                            text = viewModel.qrContent!!,
+                            contentDescription = stringResource(R.string.page_content_connecting_dialog_content_address_qr_description),
+                            modifier = Modifier
+                                .aspectRatio(1f)
+                                .fillMaxSize(),
+                            colorFilter = if (LocalDarkTheme.current) ColorFilter.colorMatrix(
+                                InvertedColorMatrix
+                            ) else null
+                        ) {
+                            margin = 2
+                        }
+                    }
                 }
             })
         }
@@ -433,16 +442,16 @@ class ConnectingScreenViewModel : ViewModel() {
     }
 
     var showQRDialog by mutableStateOf(false)
-    var qr by mutableStateOf<Bitmap?>(null)
+    var qrContent by mutableStateOf<String?>(null)
 
-    fun showQRDialog(address: String, port: Int) {
-        qr = generateQR(RoomAddressQRCode(address, port).encodeToJson())
+    fun showQRDialog(host: String, port: Int) {
+        qrContent = RoomAddressQRCode(host, port).encodeToJson()
         showQRDialog = true
     }
 
     fun dismissQRDialog() {
         showQRDialog = false
-        qr = null
+        qrContent = null
     }
 
     fun onConnectingButtonClick(seat: Int, navController: NavController, viewModel: MainViewModel) {
