@@ -22,11 +22,6 @@ fun Scanning(
     }, imageAnalyzer = QRAnalyzer(onResult = {
         navController.sendResult("qr_result", it.text)
         navController.popBackStack()
-    }, onFormatNotSupported = {
-        navController.popBackStack()
-    }, onOtherException = {
-        it.printStackTrace()
-        navController.popBackStack()
     }))
 }
 

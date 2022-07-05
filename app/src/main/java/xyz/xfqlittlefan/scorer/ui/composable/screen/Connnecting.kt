@@ -45,6 +45,7 @@ import io.ktor.server.application.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.serialization.SerializationException
 import xyz.xfqlittlefan.scorer.R
 import xyz.xfqlittlefan.scorer.communication.*
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
@@ -479,11 +480,12 @@ class ConnectingScreenViewModel : ViewModel() {
     fun onScanningQRButtonClick(navController: NavController) {
         navController.registerResult<String>("qr_result") {
             try {
-                val result = it
-                val info = result.decodeFromJson<RoomAddressQRCode>()
+                val info = it.decodeFromJson<RoomAddressQRCode>()
                 host = info.address
                 port = info.port.toString()
                 onGettingSeatsButtonClick()
+            } catch (e: SerializationException) {
+                e.printStackTrace()
             } catch (e: Throwable) {
                 e.printStackTrace()
             }

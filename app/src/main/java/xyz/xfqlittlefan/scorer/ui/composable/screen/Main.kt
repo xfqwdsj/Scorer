@@ -31,23 +31,6 @@ fun Main(
             })
     })
 ) {
-    /*
-    val ips = mutableListOf<String>()
-    val interfaces = NetworkInterface.getNetworkInterfaces()
-    for (networkInterface in interfaces) {
-        val ipAddresses = networkInterface.inetAddresses
-        for (ipAddress in ipAddresses) {
-            if (!ipAddress.isAnyLocalAddress && !ipAddress.isLoopbackAddress && !ipAddress.isLinkLocalAddress) {
-                ips += if (ipAddress is Inet6Address) {
-                    "[${ipAddress.hostAddress}]:$port"
-                } else {
-                    "${ipAddress.hostAddress}:$port"
-                }
-            }
-        }
-    }
-     */
-
     DisposableEffect(Unit) {
         onDispose {
 

@@ -10,7 +10,7 @@ import java.nio.ByteBuffer
 
 class QRAnalyzer(
     private val onResult: (qr: Result) -> Unit,
-    private val onFormatNotSupported: (format: Int) -> Unit,
+    private val onFormatNotSupported: (format: Int) -> Unit = {},
     private val onNotFoundException: (e: NotFoundException) -> Unit = {},
     private val onFormatException: (e: FormatException) -> Unit = {},
     private val onChecksumException: (e: ChecksumException) -> Unit = {},
