@@ -6,11 +6,16 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.zxing.*
 import com.google.zxing.common.HybridBinarizer
-import xyz.xfqlittlefan.scorer.util.LogUtil
 import java.nio.ByteBuffer
 
-class QRAnalyzer(private val onResult: (qr: Result) -> Unit) :
-    ImageAnalysis.Analyzer {
+class QRAnalyzer(
+    private val onResult: (qr: Result) -> Unit,
+    private val onFormatNotSupported: (format: Int) -> Unit,
+    private val onNotFoundException: (e: NotFoundException) -> Unit = {},
+    private val onFormatException: (e: FormatException) -> Unit = {},
+    private val onChecksumException: (e: ChecksumException) -> Unit = {},
+    private val onOtherException: (e: Throwable) -> Unit = {}
+) : ImageAnalysis.Analyzer {
     private val yuvFormat = mutableListOf(ImageFormat.YUV_420_888)
     private val reader = MultiFormatReader().apply {
         val map = mapOf(
@@ -28,7 +33,7 @@ class QRAnalyzer(private val onResult: (qr: Result) -> Unit) :
     override fun analyze(image: ImageProxy) {
         if (image.format !in yuvFormat) {
             image.close()
-            LogUtil.w("QRAnalyzer", "Unsupported image format: ${image.format}")
+            onFormatNotSupported(image.format)
             return
         }
 
@@ -40,13 +45,13 @@ class QRAnalyzer(private val onResult: (qr: Result) -> Unit) :
         try {
             onResult(reader.decode(binaryBitmap))
         } catch (e: NotFoundException) {
-            e.printStackTrace()
+            onNotFoundException(e)
         } catch (e: FormatException) {
-            e.printStackTrace()
+            onFormatException(e)
         } catch (e: ChecksumException) {
-            e.printStackTrace()
+            onChecksumException(e)
         } catch (e: Throwable) {
-            e.printStackTrace()
+            onOtherException(e)
         }
         image.close()
     }
