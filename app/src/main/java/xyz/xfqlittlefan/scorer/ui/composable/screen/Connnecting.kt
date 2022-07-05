@@ -477,6 +477,17 @@ class ConnectingScreenViewModel : ViewModel() {
     }
 
     fun onScanningQRButtonClick(navController: NavController) {
+        navController.registerResult<String>("qr_result") {
+            try {
+                val result = it
+                val info = result.decodeFromJson<RoomAddressQRCode>()
+                host = info.address
+                port = info.port.toString()
+                onGettingSeatsButtonClick()
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
+        }
         navController.navigate("scanning")
     }
 
