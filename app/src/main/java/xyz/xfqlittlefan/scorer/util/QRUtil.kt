@@ -46,7 +46,7 @@ class QREncodeHints {
         put(EncodeHintType.ERROR_CORRECTION, errorCorrectionLevel)
         put(EncodeHintType.CHARACTER_SET, characterSet.name)
         put(EncodeHintType.MARGIN, margin)
-        put(EncodeHintType.QR_VERSION, version.ordinal)
+        version.ordinal.let { if (it != 0) put(EncodeHintType.QR_VERSION, it) }
         put(EncodeHintType.QR_MASK_PATTERN, maskPattern.ordinal - 1)
         put(EncodeHintType.QR_COMPACT, compact)
     }
