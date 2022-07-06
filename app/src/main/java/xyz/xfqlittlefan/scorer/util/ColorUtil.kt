@@ -10,3 +10,7 @@ val InvertedColorMatrix = ColorMatrix(
         0f, 0f, 0f, 1f, 0f
     )
 )
+
+val InvertedDarkerColorMatrix = InvertedColorMatrix.apply {
+    setToScale(0.5f, 0.5f, 0.5f, 1f)
+}

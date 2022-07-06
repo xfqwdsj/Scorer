@@ -309,7 +309,7 @@ fun Connecting(
                                 .aspectRatio(1f)
                                 .fillMaxSize(),
                             colorFilter = if (LocalDarkTheme.current) ColorFilter.colorMatrix(
-                                InvertedColorMatrix
+                                InvertedDarkerColorMatrix
                             ) else null
                         ) {
                             margin = 2
