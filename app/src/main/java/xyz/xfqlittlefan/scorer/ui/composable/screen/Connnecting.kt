@@ -9,9 +9,7 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -57,17 +55,15 @@ import xyz.xfqlittlefan.scorer.communication.WebSocketServerInfo
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.scanner.ScannerActivity
+import xyz.xfqlittlefan.scorer.ui.composable.AnimatedEnterExit
+import xyz.xfqlittlefan.scorer.ui.composable.DropDownMenu
 import xyz.xfqlittlefan.scorer.ui.composable.QRCode
 import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
 import xyz.xfqlittlefan.scorer.util.*
 import java.net.InetAddress
 import java.net.NetworkInterface
 
-@OptIn(
-    ExperimentalAnimationApi::class,
-    ExperimentalMaterial3Api::class,
-    ExperimentalPermissionsApi::class
-)
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun Connecting(
     navController: NavController,
@@ -90,37 +86,8 @@ fun Connecting(
         windowSize = windowSize,
         title = stringResource(R.string.page_title_connecting),
         actions = {
-            IconButton(
-                onClick = { viewModel.onCreatingRoomButtonClick(mainViewModel) },
-                enabled = mainViewModel.server == null && !viewModel.showSeats
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add, contentDescription = stringResource(
-                        when {
-                            mainViewModel.server != null -> R.string.page_content_connecting_action_create_disabled_created
-                            viewModel.seats != null -> R.string.page_content_connecting_action_create_disabled_connected
-                            else -> R.string.page_content_connecting_action_create
-                        }
-                    )
-                )
-            }
-            if (cameraPermissionState.status == PermissionStatus.Granted) {
-                val context = LocalContext.current
-                IconButton(onClick = { viewModel.onScanningQRButtonClick(context, launcher) }) {
-                    Icon(
-                        imageVector = Icons.Default.QrCodeScanner,
-                        contentDescription = stringResource(R.string.page_content_connecting_action_scan_qr)
-                    )
-                }
-            } else {
-                IconButton(onClick = viewModel::onRequestingPermissionButtonClick) {
-                    Icon(
-                        imageVector = Icons.Default.Warning, contentDescription = stringResource(
-                            R.string.page_content_connecting_action_request_permission
-                        )
-                    )
-                }
-            }
+            ActionButtonCreatingRoom(viewModel, mainViewModel)
+            ActionButtonScanning(viewModel, cameraPermissionState, launcher)
         }) {
         Column(
             modifier = Modifier
@@ -131,103 +98,14 @@ fun Connecting(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AnimatedContent(targetState = windowSize) {
-                Text(
-                    text = stringResource(if (it == WindowWidthSizeClass.Compact) R.string.page_content_connecting_title_0 else R.string.page_content_connecting_title_1),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.titleLarge
-                )
-            }
+            Title(windowSize)
             Spacer(Modifier.height(20.dp))
-            TextField(value = viewModel.host,
-                onValueChange = viewModel::onHostChange,
-                enabled = !viewModel.showSeats,
-                label = {
-                    Text(stringResource(R.string.page_content_connecting_text_field_host_label))
-                })
+            TextFieldHost(viewModel)
             Spacer(Modifier.height(20.dp))
-            TextField(value = viewModel.port,
-                onValueChange = viewModel::onPortChange,
-                enabled = !viewModel.showSeats,
-                label = {
-                    Text(stringResource(R.string.page_content_connecting_text_field_port_label))
-                })
-            AnimatedVisibility(visible = viewModel.showSeats) {
-                Column {
-                    Spacer(Modifier.height(20.dp))
-                    FlowRow(
-                        mainAxisAlignment = FlowMainAxisAlignment.Center,
-                        crossAxisAlignment = FlowCrossAxisAlignment.Center
-                    ) {
-                        viewModel.seats?.forEach { (seat, res) ->
-                            InputChip(
-                                selected = viewModel.selectedSeat == seat,
-                                onClick = { viewModel.selectedSeat = seat },
-                                label = {
-                                    Text(stringResource(res))
-                                },
-                                enabled = viewModel.showSeats
-                            )
-                        }
-                    }
-
-                    DisposableEffect(Unit) {
-                        onDispose {
-                            viewModel.clearSeats()
-                        }
-                    }
-                }
-            }
+            TextFieldPort(viewModel)
+            Seats(viewModel)
             Spacer(Modifier.height(20.dp))
-            AnimatedContent(
-                targetState = mapOf(
-                    ButtonType.GettingSeats to !viewModel.showSeats,
-                    ButtonType.CancelingConnection to (viewModel.gettingSeatsJob != null || viewModel.showSeats),
-                    ButtonType.ShowingRoomInfo to (mainViewModel.server != null)
-                )
-            ) { buttonVisibility ->
-                FlowRow(
-                    mainAxisAlignment = FlowMainAxisAlignment.Center,
-                    crossAxisAlignment = FlowCrossAxisAlignment.Center
-                ) {
-                    if (buttonVisibility[ButtonType.GettingSeats] == true) {
-                        Button(
-                            onClick = viewModel::onGettingSeatsButtonClick,
-                            modifier = Modifier.padding(horizontal = 5.dp),
-                            enabled = buttonVisibility[ButtonType.GettingSeats] == true
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Done,
-                                contentDescription = stringResource(R.string.page_content_connecting_button_get_seats)
-                            )
-                        }
-                    }
-                    if (buttonVisibility[ButtonType.CancelingConnection] == true) {
-                        Button(
-                            onClick = viewModel::onCancelingConnectionButtonClick,
-                            modifier = Modifier.padding(horizontal = 5.dp),
-                            enabled = buttonVisibility[ButtonType.CancelingConnection] == true
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Cancel,
-                                contentDescription = stringResource(R.string.page_content_connecting_button_cancel_connection)
-                            )
-                        }
-                    }
-                    if (buttonVisibility[ButtonType.ShowingRoomInfo] == true) {
-                        Button(
-                            onClick = viewModel::showRoomInfoDialog,
-                            modifier = Modifier.padding(horizontal = 5.dp),
-                            enabled = buttonVisibility[ButtonType.ShowingRoomInfo] == true
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = stringResource(R.string.page_content_connecting_button_room_information)
-                            )
-                        }
-                    }
-                }
-            }
+            Buttons(viewModel, mainViewModel)
         }
         if (viewModel.showRoomInfoDialog) {
             AlertDialog(onDismissRequest = viewModel::dismissRoomInfoDialog, confirmButton = {
@@ -260,9 +138,11 @@ fun Connecting(
                             Text(text = addressString, modifier = Modifier.clickable {
                                 viewModel.showAddressMenu(index)
                             })
-                            DropdownMenu(
+                            DropDownMenu(
                                 expanded = viewModel.addressMenuShowingIndex == index,
-                                onDismissRequest = viewModel::dismissAddressMenu
+                                onDismissRequest = viewModel::dismissAddressMenu,
+                                expand = fadeIn() + expandIn(),
+                                collapse = shrinkOut() + fadeOut()
                             ) {
                                 val context = LocalContext.current
                                 DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_copy)) },
@@ -347,6 +227,167 @@ fun Connecting(
     }
 }
 
+@Composable
+fun ActionButtonCreatingRoom(viewModel: ConnectingScreenViewModel, mainViewModel: MainViewModel) {
+    IconButton(
+        onClick = { viewModel.onCreatingRoomButtonClick(mainViewModel) },
+        enabled = mainViewModel.server == null && !viewModel.showSeats
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add, contentDescription = stringResource(
+                when {
+                    mainViewModel.server != null -> R.string.page_content_connecting_action_create_disabled_created
+                    viewModel.seats != null -> R.string.page_content_connecting_action_create_disabled_connected
+                    else -> R.string.page_content_connecting_action_create
+                }
+            )
+        )
+    }
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun ActionButtonScanning(
+    viewModel: ConnectingScreenViewModel,
+    cameraPermissionState: PermissionState,
+    launcher: ActivityResultLauncher<Intent>
+) {
+    if (cameraPermissionState.status == PermissionStatus.Granted) {
+        val context = LocalContext.current
+        IconButton(onClick = { viewModel.onScanningQRButtonClick(context, launcher) }) {
+            Icon(
+                imageVector = Icons.Default.QrCodeScanner,
+                contentDescription = stringResource(R.string.page_content_connecting_action_scan_qr)
+            )
+        }
+    } else {
+        IconButton(onClick = viewModel::onRequestingPermissionButtonClick) {
+            Icon(
+                imageVector = Icons.Default.Warning, contentDescription = stringResource(
+                    R.string.page_content_connecting_action_request_permission
+                )
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun Title(windowSize: WindowWidthSizeClass) {
+    AnimatedContent(targetState = windowSize == WindowWidthSizeClass.Compact) {
+        Text(
+            text = stringResource(if (it) R.string.page_content_connecting_title_0 else R.string.page_content_connecting_title_1),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.titleLarge
+        )
+    }
+}
+
+@Composable
+fun TextFieldHost(viewModel: ConnectingScreenViewModel) {
+    TextField(value = viewModel.host,
+        onValueChange = viewModel::onHostChange,
+        enabled = !viewModel.showSeats,
+        label = {
+            Text(stringResource(R.string.page_content_connecting_text_field_host_label))
+        })
+}
+
+@Composable
+fun TextFieldPort(viewModel: ConnectingScreenViewModel) {
+    TextField(value = viewModel.port,
+        onValueChange = viewModel::onPortChange,
+        enabled = !viewModel.showSeats,
+        label = {
+            Text(stringResource(R.string.page_content_connecting_text_field_port_label))
+        })
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ColumnScope.Seats(viewModel: ConnectingScreenViewModel) {
+    AnimatedEnterExit(visible = viewModel.showSeats) {
+        Column {
+            Spacer(Modifier.height(20.dp))
+            FlowRow(
+                mainAxisAlignment = FlowMainAxisAlignment.Center,
+                crossAxisAlignment = FlowCrossAxisAlignment.Center
+            ) {
+                viewModel.seats?.forEach { (seat, res) ->
+                    InputChip(
+                        selected = viewModel.selectedSeat == seat,
+                        onClick = { viewModel.selectedSeat = seat },
+                        label = {
+                            Text(stringResource(res))
+                        },
+                        enabled = viewModel.showSeats
+                    )
+                }
+            }
+
+            DisposableEffect(Unit) {
+                onDispose {
+                    viewModel.clearSeats()
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun Buttons(viewModel: ConnectingScreenViewModel, mainViewModel: MainViewModel) {
+    AnimatedContent(
+        targetState = mapOf(
+            ButtonType.GettingSeats to !viewModel.showSeats,
+            ButtonType.CancelingConnection to (viewModel.gettingSeatsJob != null || viewModel.showSeats),
+            ButtonType.ShowingRoomInfo to (mainViewModel.server != null)
+        )
+    ) { buttonVisibility ->
+        FlowRow(
+            mainAxisAlignment = FlowMainAxisAlignment.Center,
+            crossAxisAlignment = FlowCrossAxisAlignment.Center
+        ) {
+            if (buttonVisibility[ButtonType.GettingSeats] == true) {
+                Button(
+                    onClick = viewModel::onGettingSeatsButtonClick,
+                    modifier = Modifier.padding(horizontal = 5.dp),
+                    enabled = buttonVisibility[ButtonType.GettingSeats] == true
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Done,
+                        contentDescription = stringResource(R.string.page_content_connecting_button_get_seats)
+                    )
+                }
+            }
+            if (buttonVisibility[ButtonType.CancelingConnection] == true) {
+                Button(
+                    onClick = viewModel::onCancelingConnectionButtonClick,
+                    modifier = Modifier.padding(horizontal = 5.dp),
+                    enabled = buttonVisibility[ButtonType.CancelingConnection] == true
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Cancel,
+                        contentDescription = stringResource(R.string.page_content_connecting_button_cancel_connection)
+                    )
+                }
+            }
+            if (buttonVisibility[ButtonType.ShowingRoomInfo] == true) {
+                Button(
+                    onClick = viewModel::showRoomInfoDialog,
+                    modifier = Modifier.padding(horizontal = 5.dp),
+                    enabled = buttonVisibility[ButtonType.ShowingRoomInfo] == true
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = stringResource(R.string.page_content_connecting_button_room_information)
+                    )
+                }
+            }
+        }
+    }
+}
+
 class ConnectingScreenViewModel : ViewModel() {
     var host by mutableStateOf("")
     var port by mutableStateOf("")
@@ -373,7 +414,7 @@ class ConnectingScreenViewModel : ViewModel() {
 
         gettingSeatsJob = viewModelScope.launch(Dispatchers.IO) {
             try {
-                val info = client.get {
+                val info = Client.get {
                     url {
                         protocol = URLProtocol.HTTP
                         host = this@ConnectingScreenViewModel.host
