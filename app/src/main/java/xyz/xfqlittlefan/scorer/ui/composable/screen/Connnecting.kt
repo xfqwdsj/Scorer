@@ -55,7 +55,6 @@ import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.scanner.ScannerActivity
 import xyz.xfqlittlefan.scorer.ui.composable.QRCode
 import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
-import xyz.xfqlittlefan.scorer.ui.theme.LocalDarkTheme
 import xyz.xfqlittlefan.scorer.util.*
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -301,16 +300,18 @@ fun Connecting(
                 Text(stringResource(R.string.page_content_connecting_dialog_title_address_qr))
             }, text = {
                 if (viewModel.qrContent != null) {
-                    Box(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxWidth()) {
                         QRCode(
                             text = viewModel.qrContent!!,
                             contentDescription = stringResource(R.string.page_content_connecting_dialog_content_address_qr_description),
                             modifier = Modifier
                                 .aspectRatio(1f)
                                 .fillMaxSize(),
-                            colorFilter = if (LocalDarkTheme.current) ColorFilter.colorMatrix(
-                                InvertedDarkerColorMatrix
-                            ) else null
+                            colorFilter = ColorFilter.colorMatrix(
+                                filteredWhiteColorMatrixWithTint(
+                                    MaterialTheme.colorScheme.onSurface
+                                )
+                            )
                         ) {
                             margin = 2
                         }
