@@ -15,7 +15,7 @@ import androidx.navigation.NavController
 import xyz.xfqlittlefan.scorer.R
 import xyz.xfqlittlefan.scorer.util.allBars
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun ScorerScaffold(
     navController: NavController? = null,
@@ -43,26 +43,28 @@ fun ScorerScaffold(
     content: @Composable () -> Unit
 ) {
     Scaffold(topBar = {
-        AnimatedVisibility(
-            visible = windowSize == WindowWidthSizeClass.Compact,
-            enter = expandVertically(),
-            exit = shrinkVertically()
-        ) {
-            SmallTopAppBar(title = {
-                Text(title)
-            }, modifier = Modifier.windowInsetsPadding(
-                WindowInsets.allBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
-            ), navigationIcon = navigationIcon, actions = { actions() })
+        AnimatedContent(
+            targetState = windowSize == WindowWidthSizeClass.Compact,
+            transitionSpec = { expandVertically() with shrinkVertically() }) {
+            if (it) {
+                SmallTopAppBar(title = {
+                    Text(title)
+                }, modifier = Modifier.windowInsetsPadding(
+                    WindowInsets.allBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
+                ), navigationIcon = navigationIcon, actions = { actions() })
+            }
         }
     }, bottomBar = {
         if (navigationItems != null) {
-            AnimatedVisibility(
-                visible = windowSize == WindowWidthSizeClass.Compact,
-                enter = expandVertically(expandFrom = Alignment.Top),
-                exit = shrinkVertically(shrinkTowards = Alignment.Top)
-            ) {
-                NavigationBar {
-                    NavigationBarScope(this).navigationItems()
+            AnimatedContent(
+                targetState = windowSize == WindowWidthSizeClass.Compact,
+                transitionSpec = {
+                    expandVertically(expandFrom = Alignment.Top) with shrinkVertically(shrinkTowards = Alignment.Top)
+                }) {
+                if (it) {
+                    NavigationBar {
+                        NavigationBarScope(this).navigationItems()
+                    }
                 }
             }
         }
@@ -72,20 +74,22 @@ fun ScorerScaffold(
                 .padding(padding)
                 .fillMaxSize()
         ) {
-            AnimatedVisibility(
-                visible = windowSize != WindowWidthSizeClass.Compact
-            ) {
-                NavigationRail(modifier = Modifier.windowInsetsPadding(
-                    WindowInsets.allBars.only(
-                        WindowInsetsSides.Start + WindowInsetsSides.Vertical
-                    )
-                ), header = {
-                    navigationIcon()
-                    Text(text = title, textAlign = TextAlign.Center)
-                    actions()
-                }) {
-                    if (navigationItems != null) {
-                        NavigationBarScope(this).navigationItems()
+            AnimatedContent(
+                targetState = windowSize != WindowWidthSizeClass.Compact,
+                transitionSpec = { expandHorizontally() with shrinkHorizontally() }) {
+                if (it) {
+                    NavigationRail(modifier = Modifier.windowInsetsPadding(
+                        WindowInsets.allBars.only(
+                            WindowInsetsSides.Start + WindowInsetsSides.Vertical
+                        )
+                    ), header = {
+                        navigationIcon()
+                        Text(text = title, textAlign = TextAlign.Center)
+                        actions()
+                    }) {
+                        if (navigationItems != null) {
+                            NavigationBarScope(this).navigationItems()
+                        }
                     }
                 }
             }
