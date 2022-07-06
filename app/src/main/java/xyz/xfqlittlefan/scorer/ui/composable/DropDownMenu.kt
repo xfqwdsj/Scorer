@@ -36,7 +36,7 @@ fun DropDownMenu(
         properties = properties
     ) {
         AnimatedEnterExit(
-            visible = visible,
+            visible = expanded && visible,
             enter = expand,
             exit = collapse
         ) {
