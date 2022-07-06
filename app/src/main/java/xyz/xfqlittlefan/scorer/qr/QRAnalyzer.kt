@@ -40,11 +40,4 @@ class QRAnalyzer(
             }
         }
     }
-
-    private fun ByteBuffer.toByteArray(): ByteArray {
-        rewind()
-        val array = ByteArray(remaining())
-        get(array)
-        return array
-    }
 }
