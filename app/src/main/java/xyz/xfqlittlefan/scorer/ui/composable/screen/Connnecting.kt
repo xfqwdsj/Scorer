@@ -48,6 +48,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
+import xyz.xfqlittlefan.scorer.BuildConfig
 import xyz.xfqlittlefan.scorer.R
 import xyz.xfqlittlefan.scorer.communication.*
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
@@ -374,7 +375,7 @@ class ConnectingScreenViewModel : ViewModel() {
                         protocol = URLProtocol.HTTP
                         host = this@ConnectingScreenViewModel.host
                         port = this@ConnectingScreenViewModel.port.toInt()
-                        appendPathSegments("join", CLIENT_VERSION.toString())
+                        appendPathSegments("join", BuildConfig.VERSION_CODE.toString())
                     }
                 }.body<String>().decodeFromJson<WebSocketServerInfo>()
                 showSeats = true

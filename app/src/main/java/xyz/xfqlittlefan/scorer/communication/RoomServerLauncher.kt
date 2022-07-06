@@ -12,6 +12,7 @@ import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.serialization.SerializationException
+import xyz.xfqlittlefan.scorer.BuildConfig
 import xyz.xfqlittlefan.scorer.R
 import xyz.xfqlittlefan.scorer.util.decodeFromJson
 import xyz.xfqlittlefan.scorer.util.encodeToJson
@@ -60,7 +61,7 @@ class RoomServerLauncher(
                 val clientVersion = call.parameters["version"]?.toIntOrNull() ?: -1
 
                 call.respond(
-                    if (clientVersion == CLIENT_VERSION) {
+                    if (clientVersion == BuildConfig.VERSION_CODE) {
                         WebSocketServerInfo(password,
                             seats.filter { it.value.joinable }
                                 .mapValues { entry -> entry.value.nameResource })

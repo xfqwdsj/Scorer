@@ -3,8 +3,6 @@ package xyz.xfqlittlefan.scorer.communication
 import androidx.annotation.StringRes
 import xyz.xfqlittlefan.scorer.R
 
-const val CLIENT_VERSION = 1
-
 enum class MessageCode(@StringRes resource: Int? = null) {
     NewConnection(R.string.connection_message_new_connection),
     SomeoneLeaving(R.string.connection_message_someone_leaving),
