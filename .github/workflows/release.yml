@@ -36,5 +36,5 @@ jobs:
       - name: 上传
         uses: actions/upload-artifact@v3
         with:
-          name: ci-build
+          name: ci-release
           path: app/build/outputs
