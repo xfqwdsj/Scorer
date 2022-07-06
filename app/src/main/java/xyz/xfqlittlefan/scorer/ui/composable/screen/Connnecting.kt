@@ -50,7 +50,10 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
 import xyz.xfqlittlefan.scorer.BuildConfig
 import xyz.xfqlittlefan.scorer.R
-import xyz.xfqlittlefan.scorer.communication.*
+import xyz.xfqlittlefan.scorer.communication.Client
+import xyz.xfqlittlefan.scorer.communication.RoomAddressQRCode
+import xyz.xfqlittlefan.scorer.communication.RoomServerLauncher
+import xyz.xfqlittlefan.scorer.communication.WebSocketServerInfo
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.scanner.ScannerActivity
