@@ -183,10 +183,10 @@ fun Connecting(
             }, title = {
                 Text(stringResource(R.string.page_content_connecting_dialog_title_address_qr))
             }, text = {
-                if (viewModel.qrContent != null) {
+                viewModel.qrContent?.let { content ->
                     Box(Modifier.fillMaxWidth()) {
                         QRCode(
-                            text = viewModel.qrContent!!,
+                            text = content,
                             contentDescription = stringResource(R.string.page_content_connecting_dialog_content_address_qr_description),
                             modifier = Modifier
                                 .aspectRatio(1f)
