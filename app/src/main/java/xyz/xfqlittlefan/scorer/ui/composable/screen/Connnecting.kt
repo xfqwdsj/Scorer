@@ -66,9 +66,9 @@ import java.net.NetworkInterface
 @Composable
 fun Connecting(
     navController: NavController,
-    windowSize: WindowWidthSizeClass,
-    viewModel: ConnectingScreenViewModel = viewModel()
+    windowSize: WindowWidthSizeClass
 ) {
+    val viewModel = viewModel<ConnectingScreenViewModel>()
     val mainViewModel = LocalMainViewModel.current
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
@@ -109,7 +109,7 @@ fun Connecting(
         if (viewModel.showRoomInfoDialog) {
             AlertDialog(onDismissRequest = viewModel::dismissRoomInfoDialog, confirmButton = {
                 Button(
-                    onClick = { viewModel.onDeletingRoomButtonClick(mainViewModel) },
+                    onClick = { viewModel.deleteRoom(mainViewModel) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError
@@ -146,21 +146,21 @@ fun Connecting(
                                 val context = LocalContext.current
                                 DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_copy)) },
                                     onClick = {
-                                        viewModel.onAddressMenuItemCopingClick(
+                                        viewModel.copyAddress(
                                             context, addressString
                                         )
                                         viewModel.dismissAddressMenu()
                                     })
                                 DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_share)) },
                                     onClick = {
-                                        viewModel.onAddressMenuItemSharingClick(
+                                        viewModel.shareAddress(
                                             context, addressString
                                         )
                                         viewModel.dismissAddressMenu()
                                     })
                                 DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_show_qr)) },
                                     onClick = {
-                                        viewModel.showQRDialog(
+                                        viewModel.showQR(
                                             address.first, address.second
                                         )
                                         viewModel.dismissAddressMenu()
@@ -227,9 +227,9 @@ fun Connecting(
 }
 
 @Composable
-fun ActionButtonCreatingRoom(viewModel: ConnectingScreenViewModel, mainViewModel: MainViewModel) {
+internal fun ActionButtonCreatingRoom(viewModel: ConnectingScreenViewModel, mainViewModel: MainViewModel) {
     IconButton(
-        onClick = { viewModel.onCreatingRoomButtonClick(mainViewModel) },
+        onClick = { viewModel.createRoom(mainViewModel) },
         enabled = mainViewModel.server == null && !viewModel.showSeats
     ) {
         Icon(
@@ -246,21 +246,21 @@ fun ActionButtonCreatingRoom(viewModel: ConnectingScreenViewModel, mainViewModel
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun ActionButtonScanning(
+internal fun ActionButtonScanning(
     viewModel: ConnectingScreenViewModel,
     cameraPermissionState: PermissionState,
     launcher: ActivityResultLauncher<Intent>
 ) {
     if (cameraPermissionState.status == PermissionStatus.Granted) {
         val context = LocalContext.current
-        IconButton(onClick = { viewModel.onScanningQRButtonClick(context, launcher) }) {
+        IconButton(onClick = { viewModel.startScanningActivity(context, launcher) }) {
             Icon(
                 imageVector = Icons.Default.QrCodeScanner,
                 contentDescription = stringResource(R.string.page_content_connecting_action_scan_qr)
             )
         }
     } else {
-        IconButton(onClick = viewModel::onRequestingPermissionButtonClick) {
+        IconButton(onClick = viewModel::showRequestPermissionRationaleDialog) {
             Icon(
                 imageVector = Icons.Default.Warning, contentDescription = stringResource(
                     R.string.page_content_connecting_action_request_permission
@@ -272,7 +272,7 @@ fun ActionButtonScanning(
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun Title(windowSize: WindowWidthSizeClass) {
+internal fun Title(windowSize: WindowWidthSizeClass) {
     AnimatedContent(targetState = windowSize == WindowWidthSizeClass.Compact) {
         Text(
             text = stringResource(if (it) R.string.page_content_connecting_title_0 else R.string.page_content_connecting_title_1),
@@ -283,9 +283,9 @@ fun Title(windowSize: WindowWidthSizeClass) {
 }
 
 @Composable
-fun TextFieldHost(viewModel: ConnectingScreenViewModel) {
+internal fun TextFieldHost(viewModel: ConnectingScreenViewModel) {
     TextField(value = viewModel.host,
-        onValueChange = viewModel::onHostChange,
+        onValueChange = viewModel::changeHost,
         enabled = !viewModel.showSeats,
         label = {
             Text(stringResource(R.string.page_content_connecting_text_field_host_label))
@@ -293,7 +293,7 @@ fun TextFieldHost(viewModel: ConnectingScreenViewModel) {
 }
 
 @Composable
-fun TextFieldPort(viewModel: ConnectingScreenViewModel) {
+internal fun TextFieldPort(viewModel: ConnectingScreenViewModel) {
     TextField(value = viewModel.port,
         onValueChange = viewModel::onPortChange,
         enabled = !viewModel.showSeats,
@@ -304,7 +304,7 @@ fun TextFieldPort(viewModel: ConnectingScreenViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ColumnScope.Seats(viewModel: ConnectingScreenViewModel) {
+internal fun ColumnScope.Seats(viewModel: ConnectingScreenViewModel) {
     AnimatedEnterExit(visible = viewModel.showSeats) {
         Column {
             Spacer(Modifier.height(20.dp))
@@ -335,7 +335,7 @@ fun ColumnScope.Seats(viewModel: ConnectingScreenViewModel) {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun Buttons(viewModel: ConnectingScreenViewModel, mainViewModel: MainViewModel) {
+internal fun Buttons(viewModel: ConnectingScreenViewModel, mainViewModel: MainViewModel) {
     AnimatedContent(
         targetState = mapOf(
             ButtonType.GettingSeats to !viewModel.showSeats,
@@ -349,7 +349,7 @@ fun Buttons(viewModel: ConnectingScreenViewModel, mainViewModel: MainViewModel) 
         ) {
             if (buttonVisibility[ButtonType.GettingSeats] == true) {
                 Button(
-                    onClick = viewModel::onGettingSeatsButtonClick,
+                    onClick = viewModel::getSeats,
                     modifier = Modifier.padding(horizontal = 5.dp),
                     enabled = buttonVisibility[ButtonType.GettingSeats] == true
                 ) {
@@ -361,7 +361,7 @@ fun Buttons(viewModel: ConnectingScreenViewModel, mainViewModel: MainViewModel) 
             }
             if (buttonVisibility[ButtonType.CancelingConnection] == true) {
                 Button(
-                    onClick = viewModel::onCancelingConnectionButtonClick,
+                    onClick = viewModel::cancelSelectingSeats,
                     modifier = Modifier.padding(horizontal = 5.dp),
                     enabled = buttonVisibility[ButtonType.CancelingConnection] == true
                 ) {
@@ -387,25 +387,55 @@ fun Buttons(viewModel: ConnectingScreenViewModel, mainViewModel: MainViewModel) 
     }
 }
 
-class ConnectingScreenViewModel : ViewModel() {
+internal class ConnectingScreenViewModel : ViewModel() {
+    /**
+     * 输入的房间地址。
+     */
     var host by mutableStateOf("")
+
+    /**
+     * 输入的房间端口。
+     */
     var port by mutableStateOf("")
 
-    fun onHostChange(newValue: String) {
+    /**
+     * 更改输入的房间地址。
+     */
+    fun changeHost(newValue: String) {
         host = newValue
     }
 
+    /**
+     * 更改输入的房间端口。
+     */
     fun onPortChange(newValue: String) {
         port = newValue
     }
 
+    /**
+     * 用于控制动画。
+     */
     var showSeats by mutableStateOf(false)
+
+    /**
+     * 座位列表。
+     */
     var seats by mutableStateOf<Map<Int, Int>?>(null)
+
+    /**
+     * 选择的座位。
+     */
     var selectedSeat by mutableStateOf<Int?>(null)
 
+    /**
+     * 获取座位的 Job。
+     */
     var gettingSeatsJob: Job? = null
 
-    fun onGettingSeatsButtonClick() {
+    /**
+     * 获取座位。
+     */
+    fun getSeats() {
         if (gettingSeatsJob != null) {
             LogUtil.d("Already getting seats.", "Scorer.GettingSeats")
             return
@@ -432,49 +462,77 @@ class ConnectingScreenViewModel : ViewModel() {
         }
     }
 
-    fun onCancelingConnectionButtonClick() {
+    /**
+     * 取消选择座位。
+     */
+    fun cancelSelectingSeats() {
         showSeats = false
         gettingSeatsJob?.cancel()
     }
 
+    /**
+     * 清除座位列表
+     */
     fun clearSeats() {
         seats = null
         selectedSeat = null
     }
 
+    /**
+     * 显示房间信息对话框。
+     */
     var showRoomInfoDialog by mutableStateOf(false)
+
+    /**
+     * 地址列表。
+     */
     var dialogAddresses by mutableStateOf(listOf<Pair<String, Int>>())
+
+    /**
+     * 显示的地址菜单。
+     */
     var addressMenuShowingIndex by mutableStateOf<Int?>(null)
 
-    fun showRoomInfoDialog() {
-        showRoomInfoDialog = true
-    }
-
-    fun dismissRoomInfoDialog() {
-        showRoomInfoDialog = false
-    }
-
-    fun onDeletingRoomButtonClick(viewModel: MainViewModel) {
-        showRoomInfoDialog = false
-        viewModelScope.launch(Dispatchers.IO) {
-            viewModel.server?.server?.stop()
-        }
-    }
-
+    /**
+     * 显示地址菜单。
+     */
     fun showAddressMenu(index: Int) {
         addressMenuShowingIndex = index
     }
 
+    /**
+     * 关闭地址菜单。
+     */
     fun dismissAddressMenu() {
         addressMenuShowingIndex = null
     }
 
-    fun onAddressMenuItemCopingClick(context: Context, address: String) {
+    /**
+     * 显示房间信息对话框。
+     */
+    fun showRoomInfoDialog() {
+        showRoomInfoDialog = true
+    }
+
+    /**
+     * 关闭房间信息对话框。
+     */
+    fun dismissRoomInfoDialog() {
+        showRoomInfoDialog = false
+    }
+
+    /**
+     * 复制地址。
+     */
+    fun copyAddress(context: Context, address: String) {
         val clipboard = getSystemService(context, ClipboardManager::class.java)
         clipboard?.setPrimaryClip(ClipData.newPlainText("Scorer Address", address))
     }
 
-    fun onAddressMenuItemSharingClick(context: Context, address: String) {
+    /**
+     * 分享地址。
+     */
+    fun shareAddress(context: Context, address: String) {
         context.startActivity(
             Intent.createChooser(
                 Intent().apply {
@@ -486,24 +544,53 @@ class ConnectingScreenViewModel : ViewModel() {
         )
     }
 
+    /**
+     * 删除房间。
+     */
+    fun deleteRoom(viewModel: MainViewModel) {
+        showRoomInfoDialog = false
+        viewModelScope.launch(Dispatchers.IO) {
+            viewModel.server?.server?.stop()
+        }
+    }
+
+    /**
+     * 显示二维码对话框。
+     */
     var showQRDialog by mutableStateOf(false)
+
+    /**
+     * 二维码内容。
+     */
     var qrContent by mutableStateOf<String?>(null)
 
-    fun showQRDialog(host: String, port: Int) {
+    /**
+     * 显示二维码
+     */
+    fun showQR(host: String, port: Int) {
         qrContent = RoomAddressQRCode(host, port).encodeToJson()
         showQRDialog = true
     }
 
+    /**
+     * 关闭二维码对话框。
+     */
     fun dismissQRDialog() {
         showQRDialog = false
         qrContent = null
     }
 
-    fun onConnectingButtonClick(seat: Int, navController: NavController, viewModel: MainViewModel) {
+    /**
+     * 连接到房间。
+     */
+    fun connect(seat: Int, navController: NavController, viewModel: MainViewModel) {
 
     }
 
-    fun onCreatingRoomButtonClick(viewModel: MainViewModel) {
+    /**
+     * 创建房间。
+     */
+    fun createRoom(viewModel: MainViewModel) {
         viewModelScope.launch(Dispatchers.IO) {
             val launcher = RoomServerLauncher()
             launcher.server.start()
@@ -518,7 +605,7 @@ class ConnectingScreenViewModel : ViewModel() {
                 showRoomInfoDialog = false
                 dialogAddresses = emptyList()
                 addressMenuShowingIndex = null
-                onCancelingConnectionButtonClick()
+                cancelSelectingSeats()
             }
             this@ConnectingScreenViewModel.host = host
             this@ConnectingScreenViewModel.port = port.toString()
@@ -534,20 +621,26 @@ class ConnectingScreenViewModel : ViewModel() {
             }
             dialogAddresses = addressesTemp
             viewModel.server = launcher
-            onGettingSeatsButtonClick()
+            getSeats()
         }
     }
 
-    fun onScanningQRButtonClick(context: Context, launcher: ActivityResultLauncher<Intent>) {
+    /**
+     * 扫描二维码。
+     */
+    fun startScanningActivity(context: Context, launcher: ActivityResultLauncher<Intent>) {
         launcher.launch(Intent(context, ScannerActivity::class.java))
     }
 
+    /**
+     * 二维码被扫描后的回调。
+     */
     fun onQRScanned(text: String) {
         try {
             val info = text.decodeFromJson<RoomAddressQRCode>()
             host = info.host
             port = info.port.toString()
-            onGettingSeatsButtonClick()
+            getSeats()
         } catch (e: SerializationException) {
             e.printStackTrace()
         } catch (e: Throwable) {
@@ -555,22 +648,37 @@ class ConnectingScreenViewModel : ViewModel() {
         }
     }
 
+    /**
+     * 显示权限请求解释对话框。
+     */
     var showRequestPermissionRationaleDialog by mutableStateOf(false)
 
-    fun onRequestingPermissionButtonClick() {
+    /**
+     * 显示权限请求解释对话框。
+     */
+    fun showRequestPermissionRationaleDialog() {
         showRequestPermissionRationaleDialog = true
     }
 
+    /**
+     * 关闭权限请求解释对话框。
+     */
     fun dismissRequestPermissionRationaleDialog() {
         showRequestPermissionRationaleDialog = false
     }
 
+    /**
+     * 请求权限。
+     */
     @OptIn(ExperimentalPermissionsApi::class)
     fun requestPermission(permissionState: PermissionState) {
         showRequestPermissionRationaleDialog = false
         permissionState.launchPermissionRequest()
     }
 
+    /**
+     * 导航到主页。
+     */
     private fun NavController.navigateToMain(
         host: String, port: Int, password: Int, seat: Int, isServer: Boolean = false
     ) {
@@ -585,6 +693,6 @@ class ConnectingScreenViewModel : ViewModel() {
     }
 }
 
-enum class ButtonType {
+internal enum class ButtonType {
     GettingSeats, CancelingConnection, Connecting, ShowingRoomInfo
 }
