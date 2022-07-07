@@ -26,42 +26,8 @@ fun AnimatedEnterExit(
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
-@Composable
-fun RowScope.AnimatedEnterExit(
-    visible: Boolean,
-    modifier: Modifier = Modifier,
-    enter: EnterTransition = fadeIn() + expandHorizontally(),
-    exit: ExitTransition = shrinkHorizontally() + fadeOut(),
-    content: @Composable AnimatedVisibilityScope.() -> Unit
-) {
-    AnimatedContent(
-        targetState = visible,
-        modifier = modifier,
-        transitionSpec = { enter with exit }
-    ) {
-        if (it) {
-            content()
-        }
-    }
-}
+val HorizontalEnter = fadeIn() + expandHorizontally()
+val HorizontalExit = shrinkHorizontally() + fadeOut()
 
-@OptIn(ExperimentalAnimationApi::class)
-@Composable
-fun ColumnScope.AnimatedEnterExit(
-    visible: Boolean,
-    modifier: Modifier = Modifier,
-    enter: EnterTransition = fadeIn() + expandVertically(),
-    exit: ExitTransition = shrinkVertically() + fadeOut(),
-    content: @Composable AnimatedVisibilityScope.() -> Unit
-) {
-    AnimatedContent(
-        targetState = visible,
-        modifier = modifier,
-        transitionSpec = { enter with exit }
-    ) {
-        if (it) {
-            content()
-        }
-    }
-}
+val VerticalEnter = fadeIn() + expandVertically()
+val VerticalExit = shrinkVertically() + fadeOut()

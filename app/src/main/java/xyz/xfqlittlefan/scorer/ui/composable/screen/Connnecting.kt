@@ -55,9 +55,7 @@ import xyz.xfqlittlefan.scorer.communication.WebSocketServerInfo
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.scanner.ScannerActivity
-import xyz.xfqlittlefan.scorer.ui.composable.AnimatedEnterExit
-import xyz.xfqlittlefan.scorer.ui.composable.QRCode
-import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
+import xyz.xfqlittlefan.scorer.ui.composable.*
 import xyz.xfqlittlefan.scorer.util.*
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -304,8 +302,8 @@ internal fun TextFieldPort(viewModel: ConnectingScreenViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ColumnScope.Seats(viewModel: ConnectingScreenViewModel) {
-    AnimatedEnterExit(visible = viewModel.showSeats) {
+internal fun Seats(viewModel: ConnectingScreenViewModel) {
+    AnimatedEnterExit(visible = viewModel.showSeats, enter = VerticalEnter, exit = VerticalExit) {
         Column {
             Spacer(Modifier.height(20.dp))
             FlowRow(
