@@ -56,7 +56,6 @@ import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.scanner.ScannerActivity
 import xyz.xfqlittlefan.scorer.ui.composable.AnimatedEnterExit
-import xyz.xfqlittlefan.scorer.ui.composable.DropDownMenu
 import xyz.xfqlittlefan.scorer.ui.composable.QRCode
 import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
 import xyz.xfqlittlefan.scorer.util.*
@@ -138,7 +137,7 @@ fun Connecting(
                             Text(text = addressString, modifier = Modifier.clickable {
                                 viewModel.showAddressMenu(index)
                             })
-                            DropDownMenu(
+                            xyz.xfqlittlefan.scorer.ui.composable.DropdownMenu(
                                 expanded = viewModel.addressMenuShowingIndex == index,
                                 onDismissRequest = viewModel::dismissAddressMenu,
                                 expand = fadeIn() + expandIn(),
