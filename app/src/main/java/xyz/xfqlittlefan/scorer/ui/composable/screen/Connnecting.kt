@@ -290,12 +290,15 @@ internal fun Title(windowSize: WindowWidthSizeClass) {
 internal fun TextFieldHost(viewModel: ConnectingScreenViewModel) {
     TextFieldWithMessage(value = viewModel.host,
         onValueChange = viewModel::changeHost,
+        modifier = Modifier.width(TextFieldDefaults.MinWidth),
         enabled = !viewModel.showSeats,
         label = {
             Text(stringResource(R.string.page_content_connecting_text_field_host_label))
-        }, message = {
-            Text(stringResource(R.string.page_content_connecting_text_field_host_error_message))
-        }, isError = viewModel.hostError
+        }, message = if (viewModel.hostError) {
+            {
+                Text(stringResource(R.string.page_content_connecting_text_field_host_error_message))
+            }
+        } else null, isError = viewModel.hostError
     )
 }
 
@@ -303,12 +306,15 @@ internal fun TextFieldHost(viewModel: ConnectingScreenViewModel) {
 internal fun TextFieldPort(viewModel: ConnectingScreenViewModel) {
     TextFieldWithMessage(value = viewModel.port,
         onValueChange = viewModel::onPortChange,
+        modifier = Modifier.width(TextFieldDefaults.MinWidth),
         enabled = !viewModel.showSeats,
         label = {
             Text(stringResource(R.string.page_content_connecting_text_field_port_label))
-        }, message = {
-            Text(stringResource(R.string.page_content_connecting_text_field_port_error_message))
-        }, isError = viewModel.portError
+        }, message = if (viewModel.portError) {
+            {
+                Text(stringResource(R.string.page_content_connecting_text_field_port_error_message))
+            }
+        } else null, isError = viewModel.portError
     )
 }
 
