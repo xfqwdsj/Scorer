@@ -1,6 +1,5 @@
 package xyz.xfqlittlefan.scorer.ui.composable
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -53,15 +52,13 @@ fun TextFieldWithMessage(
             singleLine = singleLine,
             maxLines = maxLines
         )
-        AnimatedVisibility(visible = message != null) {
-            CompositionLocalProvider(
-                LocalContentColor provides if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                LocalTextStyle provides MaterialTheme.typography.bodySmall
-            ) {
-                message?.let {
-                    Box(Modifier.padding(start = 16.dp, top = 4.dp)) {
-                        it()
-                    }
+        CompositionLocalProvider(
+            LocalContentColor provides if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+            LocalTextStyle provides MaterialTheme.typography.bodySmall
+        ) {
+            message?.let {
+                Box(Modifier.padding(start = 16.dp, top = 4.dp)) {
+                    it()
                 }
             }
         }

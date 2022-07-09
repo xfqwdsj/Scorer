@@ -294,27 +294,38 @@ internal fun TextFieldHost(viewModel: ConnectingScreenViewModel) {
         enabled = !viewModel.showSeats,
         label = {
             Text(stringResource(R.string.page_content_connecting_text_field_host_label))
-        }, message = if (viewModel.hostError) {
-            {
-                Text(stringResource(R.string.page_content_connecting_text_field_host_error_message))
-            }
-        } else null, isError = viewModel.hostError
+        },
+        message = {
+            AnimatedVisibility(
+                visible = viewModel.hostError,
+                enter = VerticalEnter,
+                exit = VerticalExit
+            )
+            { Text(stringResource(R.string.page_content_connecting_text_field_host_error_message)) }
+        },
+        isError = viewModel.hostError
     )
 }
 
 @Composable
 internal fun TextFieldPort(viewModel: ConnectingScreenViewModel) {
-    TextFieldWithMessage(value = viewModel.port,
+    TextFieldWithMessage(
+        value = viewModel.port,
         onValueChange = viewModel::onPortChange,
         modifier = Modifier.width(TextFieldDefaults.MinWidth),
         enabled = !viewModel.showSeats,
         label = {
             Text(stringResource(R.string.page_content_connecting_text_field_port_label))
-        }, message = if (viewModel.portError) {
-            {
-                Text(stringResource(R.string.page_content_connecting_text_field_port_error_message))
-            }
-        } else null, isError = viewModel.portError
+        },
+        message = {
+            AnimatedVisibility(
+                visible = viewModel.portError,
+                enter = VerticalEnter,
+                exit = VerticalExit
+            )
+            { Text(stringResource(R.string.page_content_connecting_text_field_port_error_message)) }
+        },
+        isError = viewModel.portError
     )
 }
 
@@ -429,7 +440,7 @@ internal class ConnectingScreenViewModel : ViewModel() {
      */
     fun changeHost(newValue: String) {
         host = newValue
-        hostError = try {
+        hostError = newValue.isNotEmpty() && try {
             InetAddress.getByName(newValue)
             false
         } catch (e: Throwable) {
@@ -442,7 +453,7 @@ internal class ConnectingScreenViewModel : ViewModel() {
      */
     fun onPortChange(newValue: String) {
         port = newValue
-        portError = newValue.toIntOrNull() == null
+        portError = newValue.isNotEmpty() && (newValue.toIntOrNull() == null || newValue.toInt() < 0 || newValue.toInt() > 65535)
     }
 
     /**
