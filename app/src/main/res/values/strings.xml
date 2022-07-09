@@ -11,7 +11,9 @@
     <string name="page_content_connecting_title_0">连接到一个房间或点击右上角创建一个</string>
     <string name="page_content_connecting_title_1">连接到一个房间或点击左上角创建一个</string>
     <string name="page_content_connecting_text_field_host_label">房间地址</string>
+    <string name="page_content_connecting_text_field_host_error_message">请输入一个有效的房间地址</string>
     <string name="page_content_connecting_text_field_port_label">房间端口</string>
+    <string name="page_content_connecting_text_field_port_error_message">请输入一个有效的端口</string>
     <string name="page_content_connecting_button_get_seats">查找可用的座位</string>
     <string name="page_content_connecting_button_cancel_connection">取消连接</string>
     <string name="page_content_connecting_button_room_information">房间信息</string>

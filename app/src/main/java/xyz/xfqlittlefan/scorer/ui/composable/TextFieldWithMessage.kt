@@ -1,19 +1,18 @@
 package xyz.xfqlittlefan.scorer.ui.composable
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun TextFieldWithMessage(
     value: String,
@@ -26,6 +25,7 @@ fun TextFieldWithMessage(
     placeholder: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
+    message: @Composable (() -> Unit)? = null,
     isError: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
@@ -50,5 +50,10 @@ fun TextFieldWithMessage(
             singleLine = singleLine,
             maxLines = maxLines
         )
+        AnimatedVisibility(visible = message != null) {
+            CompositionLocalProvider(LocalContentColor provides if (isError) MaterialTheme.colorScheme.error else LocalContentColor.current) {
+                message?.let { it() }
+            }
+        }
     }
 }

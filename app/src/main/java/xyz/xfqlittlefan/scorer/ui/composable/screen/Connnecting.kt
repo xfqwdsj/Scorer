@@ -55,7 +55,10 @@ import xyz.xfqlittlefan.scorer.communication.WebSocketServerInfo
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.scanner.ScannerActivity
-import xyz.xfqlittlefan.scorer.ui.composable.*
+import xyz.xfqlittlefan.scorer.ui.composable.DropdownMenu
+import xyz.xfqlittlefan.scorer.ui.composable.QRCode
+import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
+import xyz.xfqlittlefan.scorer.ui.composable.TextFieldWithMessage
 import xyz.xfqlittlefan.scorer.util.*
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -135,7 +138,7 @@ fun Connecting(
                             Text(text = addressString, modifier = Modifier.clickable {
                                 viewModel.showAddressMenu(index)
                             })
-                            xyz.xfqlittlefan.scorer.ui.composable.DropdownMenu(
+                            DropdownMenu(
                                 expanded = viewModel.addressMenuShowingIndex == index,
                                 onDismissRequest = viewModel::dismissAddressMenu,
                                 expand = fadeIn() + expandIn(),
@@ -225,7 +228,10 @@ fun Connecting(
 }
 
 @Composable
-internal fun ActionButtonCreatingRoom(viewModel: ConnectingScreenViewModel, mainViewModel: MainViewModel) {
+internal fun ActionButtonCreatingRoom(
+    viewModel: ConnectingScreenViewModel,
+    mainViewModel: MainViewModel
+) {
     IconButton(
         onClick = { viewModel.createRoom(mainViewModel) },
         enabled = mainViewModel.server == null && !viewModel.showSeats
@@ -282,35 +288,41 @@ internal fun Title(windowSize: WindowWidthSizeClass) {
 
 @Composable
 internal fun TextFieldHost(viewModel: ConnectingScreenViewModel) {
-    TextField(value = viewModel.host,
+    TextFieldWithMessage(value = viewModel.host,
         onValueChange = viewModel::changeHost,
         enabled = !viewModel.showSeats,
         label = {
             Text(stringResource(R.string.page_content_connecting_text_field_host_label))
-        })
+        }, message = {
+            Text(stringResource(R.string.page_content_connecting_text_field_host_error_message))
+        }, isError = viewModel.hostError
+    )
 }
 
 @Composable
 internal fun TextFieldPort(viewModel: ConnectingScreenViewModel) {
-    TextField(value = viewModel.port,
+    TextFieldWithMessage(value = viewModel.port,
         onValueChange = viewModel::onPortChange,
         enabled = !viewModel.showSeats,
         label = {
             Text(stringResource(R.string.page_content_connecting_text_field_port_label))
-        })
+        }, message = {
+            Text(stringResource(R.string.page_content_connecting_text_field_port_error_message))
+        }, isError = viewModel.portError
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun Seats(viewModel: ConnectingScreenViewModel) {
-    AnimatedEnterExit(visible = viewModel.showSeats, enter = VerticalEnter, exit = VerticalExit) {
+internal fun ColumnScope.Seats(viewModel: ConnectingScreenViewModel) {
+    AnimatedVisibility(visible = viewModel.showSeats) {
         Column {
             Spacer(Modifier.height(20.dp))
             FlowRow(
                 mainAxisAlignment = FlowMainAxisAlignment.Center,
                 crossAxisAlignment = FlowCrossAxisAlignment.Center
             ) {
-                viewModel.seats?.forEach { (seat, res) ->
+                viewModel.seats?.forEach { seat, res, _, _ ->
                     InputChip(
                         selected = viewModel.selectedSeat == seat,
                         onClick = { viewModel.selectedSeat = seat },
@@ -392,15 +404,31 @@ internal class ConnectingScreenViewModel : ViewModel() {
     var host by mutableStateOf("")
 
     /**
+     * 地址输入框错误状态。
+     */
+    var hostError by mutableStateOf(false)
+
+    /**
      * 输入的房间端口。
      */
     var port by mutableStateOf("")
+
+    /**
+     * 端口输入框错误状态。
+     */
+    var portError by mutableStateOf(false)
 
     /**
      * 更改输入的房间地址。
      */
     fun changeHost(newValue: String) {
         host = newValue
+        hostError = try {
+            InetAddress.getByName(newValue)
+            false
+        } catch (e: Throwable) {
+            true
+        }
     }
 
     /**
@@ -408,6 +436,7 @@ internal class ConnectingScreenViewModel : ViewModel() {
      */
     fun onPortChange(newValue: String) {
         port = newValue
+        portError = newValue.toIntOrNull() == null
     }
 
     /**
