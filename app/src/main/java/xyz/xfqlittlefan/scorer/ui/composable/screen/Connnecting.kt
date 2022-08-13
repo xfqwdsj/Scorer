@@ -286,9 +286,11 @@ internal fun Title(windowSize: WindowWidthSizeClass) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun TextFieldHost(viewModel: ConnectingScreenViewModel) {
-    TextFieldWithMessage(value = viewModel.host,
+    TextFieldWithMessage(
+        value = viewModel.host,
         onValueChange = viewModel::changeHost,
         modifier = Modifier.width(TextFieldDefaults.MinWidth),
         enabled = !viewModel.showSeats,
@@ -307,6 +309,7 @@ internal fun TextFieldHost(viewModel: ConnectingScreenViewModel) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun TextFieldPort(viewModel: ConnectingScreenViewModel) {
     TextFieldWithMessage(
@@ -453,7 +456,8 @@ internal class ConnectingScreenViewModel : ViewModel() {
      */
     fun onPortChange(newValue: String) {
         port = newValue
-        portError = newValue.isNotEmpty() && (newValue.toIntOrNull() == null || newValue.toInt() < 0 || newValue.toInt() > 65535)
+        portError =
+            newValue.isNotEmpty() && (newValue.toIntOrNull() == null || newValue.toInt() < 0 || newValue.toInt() > 65535)
     }
 
     /**

@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
  *
  * @see [androidx.compose.material3.SmallTopAppBar]
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SmallTopAppBar(
     title: @Composable () -> Unit,
@@ -31,7 +32,7 @@ fun SmallTopAppBar(
     colors: TopAppBarColors = TopAppBarDefaults.smallTopAppBarColors(),
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
-    val backgroundColor by colors.containerColor(scrollBehavior?.scrollFraction ?: 0f)
+    val backgroundColor by colors.containerColor(scrollBehavior?.state?.overlappedFraction ?: 0f)
     val foregroundColors = TopAppBarDefaults.smallTopAppBarColors(
         containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent
     )
