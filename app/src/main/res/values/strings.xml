@@ -2,12 +2,15 @@
     <string name="app_name">自负盈亏</string>
     <string name="action_back">返回</string>
     <string name="action_close">关闭</string>
+    <string name="action_copy">复制</string>
+    <string name="action_share">分享</string>
     <string name="page_title_connecting">连接</string>
     <string name="page_content_connecting_action_create">创建一个房间</string>
     <string name="page_content_connecting_action_create_disabled_created">无法创建房间，因为房间已创建</string>
     <string name="page_content_connecting_action_create_disabled_connected">无法创建房间，因为正连接到其他房间</string>
-    <string name="page_content_connecting_action_scan_qr">扫描二维码以输入房间地址</string>
-    <string name="page_content_connecting_action_request_permission">赋予相机权限以通过扫描二维码的方式输入房间地址</string>
+    <string name="page_content_connecting_action_more">显示更多加入房间的选项</string>
+    <string name="page_content_connecting_action_more_way_scan_qr">扫描二维码以输入房间地址</string>
+    <string name="page_content_connecting_action_more_way_from_clipboard">从剪切板中获取房间地址</string>
     <string name="page_content_connecting_title_0">连接到一个房间或点击右上角创建一个</string>
     <string name="page_content_connecting_title_1">连接到一个房间或点击左上角创建一个</string>
     <string name="page_content_connecting_text_field_host_label">房间地址</string>
@@ -19,9 +22,6 @@
     <string name="page_content_connecting_button_room_information">房间信息</string>
     <string name="page_content_connecting_dialog_title_room_information">房间信息</string>
     <string name="page_content_connecting_dialog_subtitle_room_information">可使用以下地址连接到房间（单击条目显示更多选项）：</string>
-    <string name="page_content_connecting_dialog_content_room_information">房间地址：%1$s，房间端口：%2$d</string>
-    <string name="page_content_connecting_dialog_content_room_information_menu_copy">复制</string>
-    <string name="page_content_connecting_dialog_content_room_information_menu_share">分享</string>
     <string name="page_content_connecting_dialog_content_room_information_menu_show_qr">显示二维码</string>
     <string name="page_content_connecting_dialog_button_room_information_0">删除房间</string>
     <string name="page_content_connecting_dialog_title_address_qr">房间地址二维码</string>
@@ -32,6 +32,8 @@
     <string name="page_content_main_nav_bar_title_room">房间</string>
     <string name="page_content_main_nav_bar_title_management">管理</string>
     <string name="page_title_scanner">扫描二维码</string>
+    <string name="template_room_address">房间地址：%1$s，房间端口：%2$d</string>
+    <string name="template_room_sharing_message">向你分享游戏房间\n%s</string>
     <string name="connection_message_new_connection">%s 进入了房间</string>
     <string name="connection_message_someone_leaving">%s 离开了房间</string>
     <string name="connection_message_someone_closing">%s 断开了连接</string>

@@ -15,7 +15,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.*
@@ -87,7 +90,6 @@ fun Connecting(
         title = stringResource(R.string.page_title_connecting),
         actions = {
             ActionButtonCreatingRoom(viewModel, mainViewModel)
-            ActionButtonScanning(viewModel, cameraPermissionState, launcher)
         }) {
         Column(
             modifier = Modifier
@@ -108,121 +110,13 @@ fun Connecting(
             Buttons(viewModel, mainViewModel)
         }
         if (viewModel.showRoomInfoDialog) {
-            AlertDialog(onDismissRequest = viewModel::dismissRoomInfoDialog, confirmButton = {
-                Button(
-                    onClick = { viewModel.deleteRoom(mainViewModel) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
-                    )
-                ) {
-                    Text(stringResource(R.string.page_content_connecting_dialog_button_room_information_0))
-                }
-            }, dismissButton = {
-                Button(onClick = viewModel::dismissRoomInfoDialog) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            }, title = {
-                Text(stringResource(R.string.page_content_connecting_dialog_title_room_information))
-            }, text = {
-                Column(Modifier.verticalScroll(rememberScrollState())) {
-                    Text(stringResource(R.string.page_content_connecting_dialog_subtitle_room_information))
-                    Spacer(Modifier.height(10.dp))
-                    viewModel.dialogAddresses.forEachIndexed { index, address ->
-                        Box {
-                            val addressString = stringResource(
-                                R.string.page_content_connecting_dialog_content_room_information,
-                                address.first,
-                                address.second
-                            )
-                            Text(text = addressString, modifier = Modifier.clickable {
-                                viewModel.showAddressMenu(index)
-                            })
-                            DropdownMenu(
-                                expanded = viewModel.addressMenuShowingIndex == index,
-                                onDismissRequest = viewModel::dismissAddressMenu,
-                                expand = fadeIn() + expandIn(),
-                                collapse = shrinkOut() + fadeOut()
-                            ) {
-                                val context = LocalContext.current
-                                DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_copy)) },
-                                    onClick = {
-                                        viewModel.copyAddress(
-                                            context, addressString
-                                        )
-                                        viewModel.dismissAddressMenu()
-                                    })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_share)) },
-                                    onClick = {
-                                        viewModel.shareAddress(
-                                            context, addressString
-                                        )
-                                        viewModel.dismissAddressMenu()
-                                    })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_show_qr)) },
-                                    onClick = {
-                                        viewModel.showQR(
-                                            address.first, address.second
-                                        )
-                                        viewModel.dismissAddressMenu()
-                                    })
-                            }
-                        }
-                        if (viewModel.dialogAddresses.lastIndex > index) {
-                            Spacer(Modifier.height(5.dp))
-                        }
-                    }
-                }
-            })
+            RoomInfoDialog(viewModel, mainViewModel)
         }
         if (viewModel.showQRDialog) {
-            AlertDialog(onDismissRequest = viewModel::dismissQRDialog, confirmButton = {
-                Button(onClick = viewModel::dismissQRDialog) {
-                    Text(stringResource(android.R.string.ok))
-                }
-            }, title = {
-                Text(stringResource(R.string.page_content_connecting_dialog_title_address_qr))
-            }, text = {
-                viewModel.qrContent?.let { content ->
-                    Box(Modifier.fillMaxWidth()) {
-                        QRCode(
-                            text = content,
-                            contentDescription = stringResource(R.string.page_content_connecting_dialog_content_address_qr_description),
-                            modifier = Modifier
-                                .aspectRatio(1f)
-                                .fillMaxSize(),
-                            colorFilter = ColorFilter.colorMatrix(
-                                filteredWhiteColorMatrixWithTint(
-                                    MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        ) {
-                            margin = 2
-                        }
-                    }
-                }
-            })
+            QRDialog(viewModel)
         }
         if (viewModel.showRequestPermissionRationaleDialog && cameraPermissionState.status is PermissionStatus.Denied) {
-            AlertDialog(onDismissRequest = viewModel::dismissRequestPermissionRationaleDialog,
-                confirmButton = {
-                    Button(onClick = { viewModel.requestPermission(cameraPermissionState) }) {
-                        Text(stringResource(android.R.string.ok))
-                    }
-                },
-                dismissButton = {
-                    Button(onClick = viewModel::dismissRequestPermissionRationaleDialog) {
-                        Text(stringResource(android.R.string.cancel))
-                    }
-                },
-                title = {
-                    Text(stringResource(R.string.page_content_connecting_dialog_title_request_permission_rationale))
-                },
-                text = {
-                    Text(
-                        stringResource(R.string.page_content_connecting_dialog_content_request_permission_rationale)
-                    )
-                })
+            RequestPermissionRationaleDialog(viewModel, cameraPermissionState)
         }
     }
 }
@@ -245,32 +139,6 @@ internal fun ActionButtonCreatingRoom(
                 }
             )
         )
-    }
-}
-
-@OptIn(ExperimentalPermissionsApi::class)
-@Composable
-internal fun ActionButtonScanning(
-    viewModel: ConnectingScreenViewModel,
-    cameraPermissionState: PermissionState,
-    launcher: ActivityResultLauncher<Intent>
-) {
-    if (cameraPermissionState.status == PermissionStatus.Granted) {
-        val context = LocalContext.current
-        IconButton(onClick = { viewModel.startScanningActivity(context, launcher) }) {
-            Icon(
-                imageVector = Icons.Default.QrCodeScanner,
-                contentDescription = stringResource(R.string.page_content_connecting_action_scan_qr)
-            )
-        }
-    } else {
-        IconButton(onClick = viewModel::showRequestPermissionRationaleDialog) {
-            Icon(
-                imageVector = Icons.Default.Warning, contentDescription = stringResource(
-                    R.string.page_content_connecting_action_request_permission
-                )
-            )
-        }
     }
 }
 
@@ -415,6 +283,137 @@ internal fun Buttons(viewModel: ConnectingScreenViewModel, mainViewModel: MainVi
             }
         }
     }
+}
+
+@Composable
+internal fun RoomInfoDialog(viewModel: ConnectingScreenViewModel, mainViewModel: MainViewModel) {
+    AlertDialog(onDismissRequest = viewModel::dismissRoomInfoDialog, confirmButton = {
+        Button(
+            onClick = { viewModel.deleteRoom(mainViewModel) },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.onError
+            )
+        ) {
+            Text(stringResource(R.string.page_content_connecting_dialog_button_room_information_0))
+        }
+    }, dismissButton = {
+        Button(onClick = viewModel::dismissRoomInfoDialog) {
+            Text(stringResource(android.R.string.cancel))
+        }
+    }, title = {
+        Text(stringResource(R.string.page_content_connecting_dialog_title_room_information))
+    }, text = {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            Text(stringResource(R.string.page_content_connecting_dialog_subtitle_room_information))
+            Spacer(Modifier.height(10.dp))
+            viewModel.dialogAddresses.forEachIndexed { index, address ->
+                Box {
+                    val addressToShow = stringResource(
+                        R.string.template_room_address,
+                        address.first,
+                        address.second
+                    )
+                    Text(text = addressToShow, modifier = Modifier.clickable {
+                        viewModel.showAddressMenu(index)
+                    })
+                    DropdownMenu(
+                        expanded = viewModel.addressMenuShowingIndex == index,
+                        onDismissRequest = viewModel::dismissAddressMenu,
+                        expand = fadeIn() + expandIn(),
+                        collapse = shrinkOut() + fadeOut()
+                    ) {
+                        val context = LocalContext.current
+                        val sharingMessage = stringResource(
+                            R.string.template_room_sharing_message,
+                            "ScorerAddress:h${address.first}p${address.second}"
+                        )
+                        DropdownMenuItem(text = { Text(stringResource(R.string.action_copy)) },
+                            onClick = {
+                                viewModel.copyAddress(
+                                    context, addressToShow
+                                )
+                                viewModel.dismissAddressMenu()
+                            })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.action_share)) },
+                            onClick = {
+                                viewModel.shareAddress(
+                                    context, sharingMessage
+                                )
+                                viewModel.dismissAddressMenu()
+                            })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_show_qr)) },
+                            onClick = {
+                                viewModel.showQR(
+                                    address.first, address.second
+                                )
+                                viewModel.dismissAddressMenu()
+                            })
+                    }
+                }
+                if (viewModel.dialogAddresses.lastIndex > index) {
+                    Spacer(Modifier.height(5.dp))
+                }
+            }
+        }
+    })
+}
+
+@Composable
+internal fun QRDialog(viewModel: ConnectingScreenViewModel) {
+    AlertDialog(onDismissRequest = viewModel::dismissQRDialog, confirmButton = {
+        Button(onClick = viewModel::dismissQRDialog) {
+            Text(stringResource(android.R.string.ok))
+        }
+    }, title = {
+        Text(stringResource(R.string.page_content_connecting_dialog_title_address_qr))
+    }, text = {
+        viewModel.qrContent?.let { content ->
+            Box(Modifier.fillMaxWidth()) {
+                QRCode(
+                    text = content,
+                    contentDescription = stringResource(R.string.page_content_connecting_dialog_content_address_qr_description),
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .fillMaxSize(),
+                    colorFilter = ColorFilter.colorMatrix(
+                        filteredWhiteColorMatrixWithTint(
+                            MaterialTheme.colorScheme.onSurface
+                        )
+                    )
+                ) {
+                    margin = 2
+                }
+            }
+        }
+    })
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+internal fun RequestPermissionRationaleDialog(
+    viewModel: ConnectingScreenViewModel,
+    cameraPermissionState: PermissionState
+) {
+    AlertDialog(onDismissRequest = viewModel::dismissRequestPermissionRationaleDialog,
+        confirmButton = {
+            Button(onClick = { viewModel.requestPermission(cameraPermissionState) }) {
+                Text(stringResource(android.R.string.ok))
+            }
+        },
+        dismissButton = {
+            Button(onClick = viewModel::dismissRequestPermissionRationaleDialog) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+        title = {
+            Text(stringResource(R.string.page_content_connecting_dialog_title_request_permission_rationale))
+        },
+        text = {
+            Text(
+                stringResource(R.string.page_content_connecting_dialog_content_request_permission_rationale)
+            )
+        })
 }
 
 internal class ConnectingScreenViewModel : ViewModel() {
@@ -662,8 +661,9 @@ internal class ConnectingScreenViewModel : ViewModel() {
             for (networkInterface in interfaces) {
                 val ipAddresses = networkInterface.inetAddresses
                 for (ipAddress in ipAddresses) {
+                    addressesTemp += "0" to 0
                     if (!ipAddress.isLoopbackAddress && !ipAddress.isLinkLocalAddress) {
-                        addressesTemp += ipAddress.hostAddress to port
+                        addressesTemp += (ipAddress.hostAddress ?: "") to port
                     }
                 }
             }
