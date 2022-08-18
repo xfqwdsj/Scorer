@@ -14,6 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import xyz.xfqlittlefan.scorer.ui.composable.screen.Connecting
+import xyz.xfqlittlefan.scorer.ui.composable.screen.ConnectingScreenViewModel
 import xyz.xfqlittlefan.scorer.ui.composable.screen.Main
 import xyz.xfqlittlefan.scorer.ui.theme.ScorerTheme
 
@@ -31,7 +32,10 @@ class MainActivity : ComponentActivity() {
                 CompositionLocalProvider(LocalMainViewModel provides viewModel) {
                     NavHost(navController = navController, startDestination = "connecting") {
                         composable("connecting") {
-                            Connecting(navController, windowSize)
+                            viewModel<ConnectingScreenViewModel>().Connecting(
+                                navController,
+                                windowSize
+                            )
                         }
                         composable(
                             "main/{host}/{port}/{password}/{seat}?isServer={isServer}",

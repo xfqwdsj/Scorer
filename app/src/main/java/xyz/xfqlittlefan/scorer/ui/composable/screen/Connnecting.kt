@@ -15,16 +15,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -32,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
@@ -68,11 +65,10 @@ import java.net.NetworkInterface
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun Connecting(
+fun ConnectingScreenViewModel.Connecting(
     navController: NavController,
     windowSize: WindowWidthSizeClass
 ) {
-    val viewModel = viewModel<ConnectingScreenViewModel>()
     val mainViewModel = LocalMainViewModel.current
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
@@ -81,7 +77,7 @@ fun Connecting(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.getStringExtra("result")?.let { viewModel.onQRScanned(it) }
+            result.data?.getStringExtra("result")?.let { onQRScanned(it) }
         }
     }
 
@@ -89,7 +85,8 @@ fun Connecting(
         windowSize = windowSize,
         title = stringResource(R.string.page_title_connecting),
         actions = {
-            ActionButtonCreatingRoom(viewModel, mainViewModel)
+            ActionButtonCreatingRoom(mainViewModel)
+            ActionButtonFillAddress(cameraPermissionState, launcher)
         }) {
         Column(
             modifier = Modifier
@@ -102,43 +99,68 @@ fun Connecting(
         ) {
             Title(windowSize)
             Spacer(Modifier.height(20.dp))
-            TextFieldHost(viewModel)
+            TextFieldHost()
             Spacer(Modifier.height(20.dp))
-            TextFieldPort(viewModel)
-            Seats(viewModel)
+            TextFieldPort()
+            Seats()
             Spacer(Modifier.height(20.dp))
-            Buttons(viewModel, mainViewModel)
+            Buttons(mainViewModel)
         }
-        if (viewModel.showRoomInfoDialog) {
-            RoomInfoDialog(viewModel, mainViewModel)
+        if (showRoomInfoDialog) {
+            RoomInfoDialog(mainViewModel)
         }
-        if (viewModel.showQRDialog) {
-            QRDialog(viewModel)
+        if (showQRDialog) {
+            QRDialog()
         }
-        if (viewModel.showRequestPermissionRationaleDialog && cameraPermissionState.status is PermissionStatus.Denied) {
-            RequestPermissionRationaleDialog(viewModel, cameraPermissionState)
+        if (showRequestPermissionRationaleDialog && cameraPermissionState.status is PermissionStatus.Denied) {
+            RequestPermissionRationaleDialog(cameraPermissionState)
         }
     }
 }
 
 @Composable
-internal fun ActionButtonCreatingRoom(
-    viewModel: ConnectingScreenViewModel,
+internal fun ConnectingScreenViewModel.ActionButtonCreatingRoom(
     mainViewModel: MainViewModel
 ) {
     IconButton(
-        onClick = { viewModel.createRoom(mainViewModel) },
-        enabled = mainViewModel.server == null && !viewModel.showSeats
+        onClick = { createRoom(mainViewModel) },
+        enabled = mainViewModel.server == null && !showSeats
     ) {
         Icon(
             imageVector = Icons.Default.Add, contentDescription = stringResource(
                 when {
                     mainViewModel.server != null -> R.string.page_content_connecting_action_create_disabled_created
-                    viewModel.seats != null -> R.string.page_content_connecting_action_create_disabled_connected
+                    seats != null -> R.string.page_content_connecting_action_create_disabled_connected
                     else -> R.string.page_content_connecting_action_create
                 }
             )
         )
+    }
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+internal fun ConnectingScreenViewModel.ActionButtonFillAddress(
+    cameraPermissionState: PermissionState,
+    launcher: ActivityResultLauncher<Intent>
+) {
+    IconButton(onClick = this::showFillOptions) {
+        Icon(
+            imageVector = Icons.Default.Edit,
+            contentDescription = stringResource(R.string.page_content_connecting_action_fill)
+        )
+    }
+    DropdownMenu(expanded = showFillingOptions, onDismissRequest = this::dismissFillOptions) {
+        val context = LocalContext.current
+        val clipboardManager = LocalClipboardManager.current
+        val regex = Regex(stringResource(R.string.template_room_address, "(.+?)", "(.+?)"))
+
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.page_content_connecting_action_fill_way_scan_qr)) },
+            onClick = { scanQR(cameraPermissionState, context, launcher) })
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.page_content_connecting_action_fill_way_from_clipboard)) },
+            onClick = { fillFromClipboard(clipboardManager, regex) })
     }
 }
 
@@ -156,75 +178,78 @@ internal fun Title(windowSize: WindowWidthSizeClass) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun TextFieldHost(viewModel: ConnectingScreenViewModel) {
+internal fun ConnectingScreenViewModel.TextFieldHost() {
     TextFieldWithMessage(
-        value = viewModel.host,
-        onValueChange = viewModel::changeHost,
+        value = host,
+        onValueChange = this::changeHost,
         modifier = Modifier.width(TextFieldDefaults.MinWidth),
-        enabled = !viewModel.showSeats,
+        enabled = !showSeats,
         label = {
             Text(stringResource(R.string.page_content_connecting_text_field_host_label))
         },
         message = {
             AnimatedVisibility(
-                visible = viewModel.hostError,
+                visible = hostError,
                 enter = VerticalEnter,
                 exit = VerticalExit
             )
             { Text(stringResource(R.string.page_content_connecting_text_field_host_error_message)) }
         },
-        isError = viewModel.hostError
+        isError = hostError
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun TextFieldPort(viewModel: ConnectingScreenViewModel) {
+internal fun ConnectingScreenViewModel.TextFieldPort() {
     TextFieldWithMessage(
-        value = viewModel.port,
-        onValueChange = viewModel::onPortChange,
+        value = port,
+        onValueChange = this::onPortChange,
         modifier = Modifier.width(TextFieldDefaults.MinWidth),
-        enabled = !viewModel.showSeats,
+        enabled = !showSeats,
         label = {
             Text(stringResource(R.string.page_content_connecting_text_field_port_label))
         },
         message = {
             AnimatedVisibility(
-                visible = viewModel.portError,
+                visible = portError,
                 enter = VerticalEnter,
                 exit = VerticalExit
             )
             { Text(stringResource(R.string.page_content_connecting_text_field_port_error_message)) }
         },
-        isError = viewModel.portError
+        isError = portError
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ColumnScope.Seats(viewModel: ConnectingScreenViewModel) {
-    AnimatedVisibility(visible = viewModel.showSeats) {
+internal fun ConnectingScreenViewModel.Seats() {
+    AnimatedVisibility(
+        visible = showSeats, enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
+    ) {
         Column {
             Spacer(Modifier.height(20.dp))
             FlowRow(
                 mainAxisAlignment = FlowMainAxisAlignment.Center,
                 crossAxisAlignment = FlowCrossAxisAlignment.Center
             ) {
-                viewModel.seats?.forEach { seat, res, _, _ ->
+                seats?.forEach { seat, res, _, _ ->
                     InputChip(
-                        selected = viewModel.selectedSeat == seat,
-                        onClick = { viewModel.selectedSeat = seat },
+                        selected = selectedSeat == seat,
+                        onClick = { selectedSeat = seat },
                         label = {
                             Text(stringResource(res))
                         },
-                        enabled = viewModel.showSeats
+                        enabled = showSeats
                     )
                 }
             }
 
             DisposableEffect(Unit) {
                 onDispose {
-                    viewModel.clearSeats()
+                    clearSeats()
                 }
             }
         }
@@ -233,11 +258,11 @@ internal fun ColumnScope.Seats(viewModel: ConnectingScreenViewModel) {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-internal fun Buttons(viewModel: ConnectingScreenViewModel, mainViewModel: MainViewModel) {
+internal fun ConnectingScreenViewModel.Buttons(mainViewModel: MainViewModel) {
     AnimatedContent(
         targetState = mapOf(
-            ButtonType.GettingSeats to !viewModel.showSeats,
-            ButtonType.CancelingConnection to (viewModel.gettingSeatsJob != null || viewModel.showSeats),
+            ButtonType.GettingSeats to !showSeats,
+            ButtonType.CancelingConnection to (gettingSeatsJob != null || showSeats),
             ButtonType.ShowingRoomInfo to (mainViewModel.server != null)
         )
     ) { buttonVisibility ->
@@ -247,7 +272,7 @@ internal fun Buttons(viewModel: ConnectingScreenViewModel, mainViewModel: MainVi
         ) {
             if (buttonVisibility[ButtonType.GettingSeats] == true) {
                 Button(
-                    onClick = viewModel::getSeats,
+                    onClick = this@Buttons::getSeats,
                     modifier = Modifier.padding(horizontal = 5.dp),
                     enabled = buttonVisibility[ButtonType.GettingSeats] == true
                 ) {
@@ -259,7 +284,7 @@ internal fun Buttons(viewModel: ConnectingScreenViewModel, mainViewModel: MainVi
             }
             if (buttonVisibility[ButtonType.CancelingConnection] == true) {
                 Button(
-                    onClick = viewModel::cancelSelectingSeats,
+                    onClick = this@Buttons::cancelSelectingSeats,
                     modifier = Modifier.padding(horizontal = 5.dp),
                     enabled = buttonVisibility[ButtonType.CancelingConnection] == true
                 ) {
@@ -271,7 +296,7 @@ internal fun Buttons(viewModel: ConnectingScreenViewModel, mainViewModel: MainVi
             }
             if (buttonVisibility[ButtonType.ShowingRoomInfo] == true) {
                 Button(
-                    onClick = viewModel::showRoomInfoDialog,
+                    onClick = this@Buttons::showRoomInfoDialog,
                     modifier = Modifier.padding(horizontal = 5.dp),
                     enabled = buttonVisibility[ButtonType.ShowingRoomInfo] == true
                 ) {
@@ -286,10 +311,10 @@ internal fun Buttons(viewModel: ConnectingScreenViewModel, mainViewModel: MainVi
 }
 
 @Composable
-internal fun RoomInfoDialog(viewModel: ConnectingScreenViewModel, mainViewModel: MainViewModel) {
-    AlertDialog(onDismissRequest = viewModel::dismissRoomInfoDialog, confirmButton = {
+internal fun ConnectingScreenViewModel.RoomInfoDialog(mainViewModel: MainViewModel) {
+    AlertDialog(onDismissRequest = this::dismissRoomInfoDialog, confirmButton = {
         Button(
-            onClick = { viewModel.deleteRoom(mainViewModel) },
+            onClick = { this.deleteRoom(mainViewModel) },
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.error,
                 contentColor = MaterialTheme.colorScheme.onError
@@ -298,7 +323,7 @@ internal fun RoomInfoDialog(viewModel: ConnectingScreenViewModel, mainViewModel:
             Text(stringResource(R.string.page_content_connecting_dialog_button_room_information_0))
         }
     }, dismissButton = {
-        Button(onClick = viewModel::dismissRoomInfoDialog) {
+        Button(onClick = this::dismissRoomInfoDialog) {
             Text(stringResource(android.R.string.cancel))
         }
     }, title = {
@@ -307,51 +332,47 @@ internal fun RoomInfoDialog(viewModel: ConnectingScreenViewModel, mainViewModel:
         Column(Modifier.verticalScroll(rememberScrollState())) {
             Text(stringResource(R.string.page_content_connecting_dialog_subtitle_room_information))
             Spacer(Modifier.height(10.dp))
-            viewModel.dialogAddresses.forEachIndexed { index, address ->
+            dialogAddresses.forEachIndexed { index, address ->
                 Box {
                     val addressToShow = stringResource(
                         R.string.template_room_address,
                         address.first,
-                        address.second
+                        address.second.toString()
                     )
                     Text(text = addressToShow, modifier = Modifier.clickable {
-                        viewModel.showAddressMenu(index)
+                        showAddressMenu(index)
                     })
                     DropdownMenu(
-                        expanded = viewModel.addressMenuShowingIndex == index,
-                        onDismissRequest = viewModel::dismissAddressMenu,
+                        expanded = addressMenuShowingIndex == index,
+                        onDismissRequest = this@RoomInfoDialog::dismissAddressMenu,
                         expand = fadeIn() + expandIn(),
                         collapse = shrinkOut() + fadeOut()
                     ) {
                         val context = LocalContext.current
-                        val sharingMessage = stringResource(
-                            R.string.template_room_sharing_message,
-                            "ScorerAddress:h${address.first}p${address.second}"
-                        )
                         DropdownMenuItem(text = { Text(stringResource(R.string.action_copy)) },
                             onClick = {
-                                viewModel.copyAddress(
+                                copyAddress(
                                     context, addressToShow
                                 )
-                                viewModel.dismissAddressMenu()
+                                dismissAddressMenu()
                             })
                         DropdownMenuItem(text = { Text(stringResource(R.string.action_share)) },
                             onClick = {
-                                viewModel.shareAddress(
-                                    context, sharingMessage
+                                shareAddress(
+                                    context, addressToShow
                                 )
-                                viewModel.dismissAddressMenu()
+                                dismissAddressMenu()
                             })
                         DropdownMenuItem(text = { Text(stringResource(R.string.page_content_connecting_dialog_content_room_information_menu_show_qr)) },
                             onClick = {
-                                viewModel.showQR(
+                                showQR(
                                     address.first, address.second
                                 )
-                                viewModel.dismissAddressMenu()
+                                dismissAddressMenu()
                             })
                     }
                 }
-                if (viewModel.dialogAddresses.lastIndex > index) {
+                if (dialogAddresses.lastIndex > index) {
                     Spacer(Modifier.height(5.dp))
                 }
             }
@@ -360,15 +381,15 @@ internal fun RoomInfoDialog(viewModel: ConnectingScreenViewModel, mainViewModel:
 }
 
 @Composable
-internal fun QRDialog(viewModel: ConnectingScreenViewModel) {
-    AlertDialog(onDismissRequest = viewModel::dismissQRDialog, confirmButton = {
-        Button(onClick = viewModel::dismissQRDialog) {
+internal fun ConnectingScreenViewModel.QRDialog() {
+    AlertDialog(onDismissRequest = this::dismissQRDialog, confirmButton = {
+        Button(onClick = this::dismissQRDialog) {
             Text(stringResource(android.R.string.ok))
         }
     }, title = {
         Text(stringResource(R.string.page_content_connecting_dialog_title_address_qr))
     }, text = {
-        viewModel.qrContent?.let { content ->
+        qrContent?.let { content ->
             Box(Modifier.fillMaxWidth()) {
                 QRCode(
                     text = content,
@@ -391,18 +412,18 @@ internal fun QRDialog(viewModel: ConnectingScreenViewModel) {
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-internal fun RequestPermissionRationaleDialog(
-    viewModel: ConnectingScreenViewModel,
+internal fun ConnectingScreenViewModel.RequestPermissionRationaleDialog(
     cameraPermissionState: PermissionState
 ) {
-    AlertDialog(onDismissRequest = viewModel::dismissRequestPermissionRationaleDialog,
+    AlertDialog(
+        onDismissRequest = this::dismissRequestPermissionRationaleDialog,
         confirmButton = {
-            Button(onClick = { viewModel.requestPermission(cameraPermissionState) }) {
+            Button(onClick = { requestPermission(cameraPermissionState) }) {
                 Text(stringResource(android.R.string.ok))
             }
         },
         dismissButton = {
-            Button(onClick = viewModel::dismissRequestPermissionRationaleDialog) {
+            Button(onClick = this::dismissRequestPermissionRationaleDialog) {
                 Text(stringResource(android.R.string.cancel))
             }
         },
@@ -416,7 +437,7 @@ internal fun RequestPermissionRationaleDialog(
         })
 }
 
-internal class ConnectingScreenViewModel : ViewModel() {
+class ConnectingScreenViewModel : ViewModel() {
     /**
      * 输入的房间地址。
      */
@@ -674,10 +695,39 @@ internal class ConnectingScreenViewModel : ViewModel() {
     }
 
     /**
+     * 显示填充地址选项。
+     */
+    var showFillingOptions by mutableStateOf(false)
+
+    /**
+     * 显示填充地址选项。
+     */
+    fun showFillOptions() {
+        showFillingOptions = true
+    }
+
+    /**
+     * 关闭填充地址选项。
+     */
+    fun dismissFillOptions() {
+        showFillingOptions = false
+    }
+
+    /**
      * 扫描二维码。
      */
-    fun startScanningActivity(context: Context, launcher: ActivityResultLauncher<Intent>) {
-        launcher.launch(Intent(context, ScannerActivity::class.java))
+    @OptIn(ExperimentalPermissionsApi::class)
+    fun scanQR(
+        cameraPermissionState: PermissionState,
+        context: Context,
+        launcher: ActivityResultLauncher<Intent>
+    ) {
+        if (cameraPermissionState.status is PermissionStatus.Granted) {
+            launcher.launch(Intent(context, ScannerActivity::class.java))
+        } else {
+            showRequestPermissionRationaleDialog = true
+        }
+        showFillingOptions = false
     }
 
     /**
@@ -702,13 +752,6 @@ internal class ConnectingScreenViewModel : ViewModel() {
     var showRequestPermissionRationaleDialog by mutableStateOf(false)
 
     /**
-     * 显示权限请求解释对话框。
-     */
-    fun showRequestPermissionRationaleDialog() {
-        showRequestPermissionRationaleDialog = true
-    }
-
-    /**
      * 关闭权限请求解释对话框。
      */
     fun dismissRequestPermissionRationaleDialog() {
@@ -722,6 +765,13 @@ internal class ConnectingScreenViewModel : ViewModel() {
     fun requestPermission(permissionState: PermissionState) {
         showRequestPermissionRationaleDialog = false
         permissionState.launchPermissionRequest()
+    }
+
+    fun fillFromClipboard(
+        clipboardManager: androidx.compose.ui.platform.ClipboardManager,
+        template: Regex
+    ) {
+
     }
 
     /**
