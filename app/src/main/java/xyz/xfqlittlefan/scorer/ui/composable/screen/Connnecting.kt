@@ -55,7 +55,6 @@ import xyz.xfqlittlefan.scorer.communication.WebSocketServerInfo
 import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.scanner.ScannerActivity
-import xyz.xfqlittlefan.scorer.ui.composable.DropdownMenu
 import xyz.xfqlittlefan.scorer.ui.composable.QRCode
 import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
 import xyz.xfqlittlefan.scorer.ui.composable.TextFieldWithMessage
@@ -152,20 +151,17 @@ internal fun ConnectingScreenViewModel.ActionButtonFillAddress(
     }
     DropdownMenu(
         expanded = showFillingOptions,
-        onDismissRequest = this::dismissFillOptions,
-        expand = fadeIn() + expandIn(expandFrom = Alignment.BottomEnd),
-        collapse = shrinkOut(shrinkTowards = Alignment.BottomEnd) + fadeOut(),
+        onDismissRequest = this::dismissFillOptions
     ) {
         val context = LocalContext.current
         val clipboardManager = LocalClipboardManager.current
-        val regex = Regex("ScorerAddress:h(.+?)p(.+?)")
 
         DropdownMenuItem(
             text = { Text(stringResource(R.string.page_content_connecting_action_fill_way_scan_qr)) },
             onClick = { scanQR(cameraPermissionState, context, launcher) })
         DropdownMenuItem(
             text = { Text(stringResource(R.string.page_content_connecting_action_fill_way_from_clipboard)) },
-            onClick = { fillFromClipboard(clipboardManager, regex) })
+            onClick = { fillFromClipboard(clipboardManager) })
     }
 }
 
@@ -339,29 +335,27 @@ internal fun ConnectingScreenViewModel.RoomInfoDialog(mainViewModel: MainViewMod
             Spacer(Modifier.height(10.dp))
             dialogAddresses.forEachIndexed { index, address ->
                 Box {
-                    val addressToShow = stringResource(
+                    Text(text = stringResource(
                         R.string.template_room_address,
                         address.first,
                         address.second.toString()
-                    )
-                    Text(text = addressToShow, modifier = Modifier.clickable {
+                    ), modifier = Modifier.clickable {
                         showAddressMenu(index)
                     })
                     DropdownMenu(
                         expanded = addressMenuShowingIndex == index,
-                        onDismissRequest = this@RoomInfoDialog::dismissAddressMenu,
-                        expand = fadeIn() + expandIn(),
-                        collapse = shrinkOut() + fadeOut()
+                        onDismissRequest = this@RoomInfoDialog::dismissAddressMenu
                     ) {
                         val context = LocalContext.current
+                        val addressToShare = "ScorerAddress:h${address.first}p${address.second}"
                         val sharingMessage = stringResource(
                             R.string.template_room_sharing_message
-                        ) + "ScorerAddress:h${address.first}p${address.second}"
+                        )
                         DropdownMenuItem(text = { Text(stringResource(R.string.action_copy)) },
                             onClick = {
                                 copyAddress(
                                     context,
-                                    addressToShow + "ScorerAddress:h${address.first}p${address.second}"
+                                    addressToShare
                                 )
                                 dismissAddressMenu()
                             })
@@ -369,7 +363,7 @@ internal fun ConnectingScreenViewModel.RoomInfoDialog(mainViewModel: MainViewMod
                             text = { Text(stringResource(R.string.action_share)) },
                             onClick = {
                                 shareAddress(
-                                    context, sharingMessage
+                                    context, "$sharingMessage\n$addressToShare"
                                 )
                                 dismissAddressMenu()
                             })
@@ -692,7 +686,6 @@ class ConnectingScreenViewModel : ViewModel() {
             for (networkInterface in interfaces) {
                 val ipAddresses = networkInterface.inetAddresses
                 for (ipAddress in ipAddresses) {
-                    addressesTemp += "0" to 0
                     if (!ipAddress.isLoopbackAddress && !ipAddress.isLinkLocalAddress) {
                         addressesTemp += (ipAddress.hostAddress ?: "") to port
                     }
@@ -778,16 +771,16 @@ class ConnectingScreenViewModel : ViewModel() {
     }
 
     fun fillFromClipboard(
-        clipboardManager: androidx.compose.ui.platform.ClipboardManager,
-        template: Regex
+        clipboardManager: androidx.compose.ui.platform.ClipboardManager
     ) {
         clipboardManager.getText()?.text?.let { text ->
-            template.matchEntire(text)?.groupValues?.let {
+            Regex("ScorerAddress:h(.+)p(.+)").find(text)?.groupValues?.let {
                 host = it[1]
                 port = it[2]
                 getSeats()
             }
         }
+        showFillingOptions = false
     }
 
     /**
