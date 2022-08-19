@@ -150,10 +150,15 @@ internal fun ConnectingScreenViewModel.ActionButtonFillAddress(
             contentDescription = stringResource(R.string.page_content_connecting_action_fill)
         )
     }
-    DropdownMenu(expanded = showFillingOptions, onDismissRequest = this::dismissFillOptions) {
+    DropdownMenu(
+        expanded = showFillingOptions,
+        onDismissRequest = this::dismissFillOptions,
+        expand = fadeIn() + expandIn(expandFrom = Alignment.BottomEnd),
+        collapse = shrinkOut(shrinkTowards = Alignment.BottomEnd) + fadeOut(),
+    ) {
         val context = LocalContext.current
         val clipboardManager = LocalClipboardManager.current
-        val regex = Regex(stringResource(R.string.template_room_address, "(.+?)", "(.+?)"))
+        val regex = Regex("ScorerAddress:h(.+?)p(.+?)")
 
         DropdownMenuItem(
             text = { Text(stringResource(R.string.page_content_connecting_action_fill_way_scan_qr)) },
@@ -349,17 +354,22 @@ internal fun ConnectingScreenViewModel.RoomInfoDialog(mainViewModel: MainViewMod
                         collapse = shrinkOut() + fadeOut()
                     ) {
                         val context = LocalContext.current
+                        val sharingMessage = stringResource(
+                            R.string.template_room_sharing_message
+                        ) + "ScorerAddress:h${address.first}p${address.second}"
                         DropdownMenuItem(text = { Text(stringResource(R.string.action_copy)) },
                             onClick = {
                                 copyAddress(
-                                    context, addressToShow
+                                    context,
+                                    addressToShow + "ScorerAddress:h${address.first}p${address.second}"
                                 )
                                 dismissAddressMenu()
                             })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.action_share)) },
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_share)) },
                             onClick = {
                                 shareAddress(
-                                    context, addressToShow
+                                    context, sharingMessage
                                 )
                                 dismissAddressMenu()
                             })
@@ -771,7 +781,13 @@ class ConnectingScreenViewModel : ViewModel() {
         clipboardManager: androidx.compose.ui.platform.ClipboardManager,
         template: Regex
     ) {
-
+        clipboardManager.getText()?.text?.let { text ->
+            template.matchEntire(text)?.groupValues?.let {
+                host = it[1]
+                port = it[2]
+                getSeats()
+            }
+        }
     }
 
     /**

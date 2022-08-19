@@ -59,7 +59,7 @@ fun DropdownMenu(
                 tonalElevation = MenuElevation,
                 shadowElevation = MenuElevation
             ) {
-                AnimatedEnterExit(
+                AnimatedVisibility(
                     visible = expanded && visible,
                     enter = expand,
                     exit = collapse

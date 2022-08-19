@@ -33,6 +33,7 @@
     <string name="page_content_main_nav_bar_title_management">管理</string>
     <string name="page_title_scanner">扫描二维码</string>
     <string name="template_room_address">房间地址：%1$s，房间端口：%2$s</string>
+    <string name="template_room_sharing_message">向你分享游戏房间</string>
     <string name="connection_message_new_connection">%s 进入了房间</string>
     <string name="connection_message_someone_leaving">%s 离开了房间</string>
     <string name="connection_message_someone_closing">%s 断开了连接</string>
