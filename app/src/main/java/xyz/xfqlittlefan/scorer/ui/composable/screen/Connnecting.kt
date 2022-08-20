@@ -666,7 +666,7 @@ class ConnectingScreenViewModel : ViewModel() {
     /**
      * 是否显示权限请求解释对话框。
      */
-    var shouldShowPermissionRequestingRationaleDialog by mutableingStateOf(false)
+    var shouldShowPermissionRequestingRationaleDialog by mutableStateOf(false)
 
     fun dismissPermissionRequestingRationaleDialog() {
         shouldShowPermissionRequestingRationaleDialog = false
