@@ -105,13 +105,13 @@ fun ConnectingScreenViewModel.Connecting(
             Spacer(Modifier.height(20.dp))
             Buttons(mainViewModel)
         }
-        if (showRoomInfoDialog) {
+        if (shouldShowRoomInfoDialog) {
             RoomInfoDialog(mainViewModel)
         }
-        if (showQRDialog) {
+        if (shouldShowQRDialog) {
             QRDialog()
         }
-        if (showRequestPermissionRationaleDialog && cameraPermissionState.status is PermissionStatus.Denied) {
+        if (shouldShowPermissionRequestingRationaleDialog && cameraPermissionState.status is PermissionStatus.Denied) {
             RequestPermissionRationaleDialog(cameraPermissionState)
         }
     }
@@ -123,7 +123,7 @@ internal fun ConnectingScreenViewModel.ActionButtonCreatingRoom(
 ) {
     IconButton(
         onClick = { createRoom(mainViewModel) },
-        enabled = mainViewModel.server == null && !showSeats
+        enabled = mainViewModel.server == null && !shouldShowSeats
     ) {
         Icon(
             imageVector = Icons.Default.Add, contentDescription = stringResource(
@@ -143,15 +143,15 @@ internal fun ConnectingScreenViewModel.ActionButtonFillAddress(
     cameraPermissionState: PermissionState,
     launcher: ActivityResultLauncher<Intent>
 ) {
-    IconButton(onClick = this::showFillOptions) {
+    IconButton(onClick = this::showFillingOptionsMenu) {
         Icon(
             imageVector = Icons.Default.Edit,
             contentDescription = stringResource(R.string.page_content_connecting_action_fill)
         )
     }
     DropdownMenu(
-        expanded = showFillingOptions,
-        onDismissRequest = this::dismissFillOptions
+        expanded = shouldShowFillingOptionsMenu,
+        onDismissRequest = this::dismissFillingOptionsMenu
     ) {
         val context = LocalContext.current
         val clipboardManager = LocalClipboardManager.current
@@ -184,19 +184,19 @@ internal fun ConnectingScreenViewModel.TextFieldHost() {
         value = host,
         onValueChange = this::changeHost,
         modifier = Modifier.width(TextFieldDefaults.MinWidth),
-        enabled = !showSeats,
+        enabled = !shouldShowSeats,
         label = {
             Text(stringResource(R.string.page_content_connecting_text_field_host_label))
         },
         message = {
             AnimatedVisibility(
-                visible = hostError,
+                visible = isHostError,
                 enter = VerticalEnter,
                 exit = VerticalExit
             )
             { Text(stringResource(R.string.page_content_connecting_text_field_host_error_message)) }
         },
-        isError = hostError
+        isError = isHostError
     )
 }
 
@@ -205,21 +205,21 @@ internal fun ConnectingScreenViewModel.TextFieldHost() {
 internal fun ConnectingScreenViewModel.TextFieldPort() {
     TextFieldWithMessage(
         value = port,
-        onValueChange = this::onPortChange,
+        onValueChange = this::changePort,
         modifier = Modifier.width(TextFieldDefaults.MinWidth),
-        enabled = !showSeats,
+        enabled = !shouldShowSeats,
         label = {
             Text(stringResource(R.string.page_content_connecting_text_field_port_label))
         },
         message = {
             AnimatedVisibility(
-                visible = portError,
+                visible = isPortError,
                 enter = VerticalEnter,
                 exit = VerticalExit
             )
             { Text(stringResource(R.string.page_content_connecting_text_field_port_error_message)) }
         },
-        isError = portError
+        isError = isPortError
     )
 }
 
@@ -227,7 +227,7 @@ internal fun ConnectingScreenViewModel.TextFieldPort() {
 @Composable
 internal fun ConnectingScreenViewModel.Seats() {
     AnimatedVisibility(
-        visible = showSeats, enter = fadeIn() + expandVertically(),
+        visible = shouldShowSeats, enter = fadeIn() + expandVertically(),
         exit = fadeOut() + shrinkVertically(),
     ) {
         Column {
@@ -243,7 +243,7 @@ internal fun ConnectingScreenViewModel.Seats() {
                         label = {
                             Text(stringResource(res))
                         },
-                        enabled = showSeats
+                        enabled = shouldShowSeats
                     )
                 }
             }
@@ -262,8 +262,8 @@ internal fun ConnectingScreenViewModel.Seats() {
 internal fun ConnectingScreenViewModel.Buttons(mainViewModel: MainViewModel) {
     AnimatedContent(
         targetState = mapOf(
-            ButtonType.GettingSeats to !showSeats,
-            ButtonType.CancelingConnection to (gettingSeatsJob != null || showSeats),
+            ButtonType.GettingSeats to !shouldShowSeats,
+            ButtonType.CancelingConnection to (gettingSeatsJob != null || shouldShowSeats),
             ButtonType.ShowingRoomInfo to (mainViewModel.server != null)
         )
     ) { buttonVisibility ->
@@ -333,7 +333,7 @@ internal fun ConnectingScreenViewModel.RoomInfoDialog(mainViewModel: MainViewMod
         Column(Modifier.verticalScroll(rememberScrollState())) {
             Text(stringResource(R.string.page_content_connecting_dialog_subtitle_room_information))
             Spacer(Modifier.height(10.dp))
-            dialogAddresses.forEachIndexed { index, address ->
+            roomInfoAddresses.forEachIndexed { index, address ->
                 Box {
                     Text(text = stringResource(
                         R.string.template_room_address,
@@ -376,7 +376,7 @@ internal fun ConnectingScreenViewModel.RoomInfoDialog(mainViewModel: MainViewMod
                             })
                     }
                 }
-                if (dialogAddresses.lastIndex > index) {
+                if (roomInfoAddresses.lastIndex > index) {
                     Spacer(Modifier.height(5.dp))
                 }
             }
@@ -420,14 +420,14 @@ internal fun ConnectingScreenViewModel.RequestPermissionRationaleDialog(
     cameraPermissionState: PermissionState
 ) {
     AlertDialog(
-        onDismissRequest = this::dismissRequestPermissionRationaleDialog,
+        onDismissRequest = this::dismissPermissionRequestingRationaleDialog,
         confirmButton = {
             Button(onClick = { requestPermission(cameraPermissionState) }) {
                 Text(stringResource(android.R.string.ok))
             }
         },
         dismissButton = {
-            Button(onClick = this::dismissRequestPermissionRationaleDialog) {
+            Button(onClick = this::dismissPermissionRequestingRationaleDialog) {
                 Text(stringResource(android.R.string.cancel))
             }
         },
@@ -442,32 +442,17 @@ internal fun ConnectingScreenViewModel.RequestPermissionRationaleDialog(
 }
 
 class ConnectingScreenViewModel : ViewModel() {
-    /**
-     * 输入的房间地址。
-     */
     var host by mutableStateOf("")
 
-    /**
-     * 地址输入框错误状态。
-     */
-    var hostError by mutableStateOf(false)
+    var isHostError by mutableStateOf(false)
 
-    /**
-     * 输入的房间端口。
-     */
     var port by mutableStateOf("")
 
-    /**
-     * 端口输入框错误状态。
-     */
-    var portError by mutableStateOf(false)
+    var isPortError by mutableStateOf(false)
 
-    /**
-     * 更改输入的房间地址。
-     */
     fun changeHost(newValue: String) {
         host = newValue
-        hostError = newValue.isNotEmpty() && try {
+        isHostError = newValue.isNotEmpty() && try {
             InetAddress.getByName(newValue)
             false
         } catch (e: Throwable) {
@@ -475,38 +460,23 @@ class ConnectingScreenViewModel : ViewModel() {
         }
     }
 
-    /**
-     * 更改输入的房间端口。
-     */
-    fun onPortChange(newValue: String) {
+    fun changePort(newValue: String) {
         port = newValue
-        portError =
+        isPortError =
             newValue.isNotEmpty() && (newValue.toIntOrNull() == null || newValue.toInt() < 0 || newValue.toInt() > 65535)
     }
 
     /**
-     * 用于控制动画。
+     * 是否显示座位列表，用于控制动画。
      */
-    var showSeats by mutableStateOf(false)
+    var shouldShowSeats by mutableStateOf(false)
 
-    /**
-     * 座位列表。
-     */
     var seats by mutableStateOf<Map<Int, Int>?>(null)
 
-    /**
-     * 选择的座位。
-     */
     var selectedSeat by mutableStateOf<Int?>(null)
 
-    /**
-     * 获取座位的 Job。
-     */
     var gettingSeatsJob: Job? = null
 
-    /**
-     * 获取座位。
-     */
     fun getSeats() {
         if (gettingSeatsJob != null) {
             LogUtil.d("Already getting seats.", "Scorer.GettingSeats")
@@ -523,87 +493,61 @@ class ConnectingScreenViewModel : ViewModel() {
                         appendPathSegments("join", BuildConfig.VERSION_CODE.toString())
                     }
                 }.body<String>().decodeFromJson<WebSocketServerInfo>()
-                showSeats = true
+                shouldShowSeats = true
                 seats = info.seats
             } catch (e: Throwable) {
                 e.printStackTrace()
             }
-        }
-        gettingSeatsJob?.invokeOnCompletion {
-            gettingSeatsJob = null
+        }.apply {
+            invokeOnCompletion {
+                gettingSeatsJob = null
+            }
         }
     }
 
-    /**
-     * 取消选择座位。
-     */
     fun cancelSelectingSeats() {
-        showSeats = false
+        shouldShowSeats = false
         gettingSeatsJob?.cancel()
     }
 
-    /**
-     * 清除座位列表
-     */
     fun clearSeats() {
         seats = null
         selectedSeat = null
     }
 
-    /**
-     * 显示房间信息对话框。
-     */
-    var showRoomInfoDialog by mutableStateOf(false)
+    var shouldShowRoomInfoDialog by mutableStateOf(false)
+
+    fun showRoomInfoDialog() {
+        shouldShowRoomInfoDialog = true
+    }
+
+    fun dismissRoomInfoDialog() {
+        shouldShowRoomInfoDialog = false
+    }
 
     /**
-     * 地址列表。
+     * 在房间信息对话框中显示的地址列表。
      */
-    var dialogAddresses by mutableStateOf(listOf<Pair<String, Int>>())
+    var roomInfoAddresses by mutableStateOf(listOf<Pair<String, Int>>())
 
     /**
      * 显示的地址菜单。
      */
     var addressMenuShowingIndex by mutableStateOf<Int?>(null)
 
-    /**
-     * 显示地址菜单。
-     */
     fun showAddressMenu(index: Int) {
         addressMenuShowingIndex = index
     }
 
-    /**
-     * 关闭地址菜单。
-     */
     fun dismissAddressMenu() {
         addressMenuShowingIndex = null
     }
 
-    /**
-     * 显示房间信息对话框。
-     */
-    fun showRoomInfoDialog() {
-        showRoomInfoDialog = true
-    }
-
-    /**
-     * 关闭房间信息对话框。
-     */
-    fun dismissRoomInfoDialog() {
-        showRoomInfoDialog = false
-    }
-
-    /**
-     * 复制地址。
-     */
     fun copyAddress(context: Context, address: String) {
         val clipboard = getSystemService(context, ClipboardManager::class.java)
         clipboard?.setPrimaryClip(ClipData.newPlainText("Scorer Address", address))
     }
 
-    /**
-     * 分享地址。
-     */
     fun shareAddress(context: Context, address: String) {
         context.startActivity(
             Intent.createChooser(
@@ -616,52 +560,34 @@ class ConnectingScreenViewModel : ViewModel() {
         )
     }
 
-    /**
-     * 删除房间。
-     */
     fun deleteRoom(viewModel: MainViewModel) {
-        showRoomInfoDialog = false
+        shouldShowRoomInfoDialog = false
         viewModelScope.launch(Dispatchers.IO) {
             viewModel.server?.server?.stop()
         }
     }
 
     /**
-     * 显示二维码对话框。
+     * 是否显示二维码对话框。
      */
-    var showQRDialog by mutableStateOf(false)
+    var shouldShowQRDialog by mutableStateOf(false)
 
-    /**
-     * 二维码内容。
-     */
     var qrContent by mutableStateOf<String?>(null)
 
-    /**
-     * 显示二维码
-     */
     fun showQR(host: String, port: Int) {
         qrContent = RoomAddressQRCode(host, port).encodeToJson()
-        showQRDialog = true
+        shouldShowQRDialog = true
     }
 
-    /**
-     * 关闭二维码对话框。
-     */
     fun dismissQRDialog() {
-        showQRDialog = false
+        shouldShowQRDialog = false
         qrContent = null
     }
 
-    /**
-     * 连接到房间。
-     */
     fun connect(seat: Int, navController: NavController, viewModel: MainViewModel) {
 
     }
 
-    /**
-     * 创建房间。
-     */
     fun createRoom(viewModel: MainViewModel) {
         viewModelScope.launch(Dispatchers.IO) {
             val launcher = RoomServerLauncher()
@@ -674,8 +600,8 @@ class ConnectingScreenViewModel : ViewModel() {
                     this@ConnectingScreenViewModel.host = ""
                     this@ConnectingScreenViewModel.port = ""
                 }
-                showRoomInfoDialog = false
-                dialogAddresses = emptyList()
+                shouldShowRoomInfoDialog = false
+                roomInfoAddresses = emptyList()
                 addressMenuShowingIndex = null
                 cancelSelectingSeats()
             }
@@ -691,51 +617,39 @@ class ConnectingScreenViewModel : ViewModel() {
                     }
                 }
             }
-            dialogAddresses = addressesTemp
+            roomInfoAddresses = addressesTemp
             viewModel.server = launcher
             getSeats()
         }
     }
 
     /**
-     * 显示填充地址选项。
+     * 是否显示填充地址选项菜单。
      */
-    var showFillingOptions by mutableStateOf(false)
+    var shouldShowFillingOptionsMenu by mutableStateOf(false)
 
-    /**
-     * 显示填充地址选项。
-     */
-    fun showFillOptions() {
-        showFillingOptions = true
+    fun showFillingOptionsMenu() {
+        shouldShowFillingOptionsMenu = true
     }
 
-    /**
-     * 关闭填充地址选项。
-     */
-    fun dismissFillOptions() {
-        showFillingOptions = false
+    fun dismissFillingOptionsMenu() {
+        shouldShowFillingOptionsMenu = false
     }
 
-    /**
-     * 扫描二维码。
-     */
     @OptIn(ExperimentalPermissionsApi::class)
     fun scanQR(
         cameraPermissionState: PermissionState,
         context: Context,
         launcher: ActivityResultLauncher<Intent>
     ) {
+        shouldShowFillingOptionsMenu = false
         if (cameraPermissionState.status is PermissionStatus.Granted) {
             launcher.launch(Intent(context, ScannerActivity::class.java))
         } else {
-            showRequestPermissionRationaleDialog = true
+            shouldShowPermissionRequestingRationaleDialog = true
         }
-        showFillingOptions = false
     }
 
-    /**
-     * 二维码被扫描后的回调。
-     */
     fun onQRScanned(text: String) {
         try {
             val info = text.decodeFromJson<RoomAddressQRCode>()
@@ -750,29 +664,24 @@ class ConnectingScreenViewModel : ViewModel() {
     }
 
     /**
-     * 显示权限请求解释对话框。
+     * 是否显示权限请求解释对话框。
      */
-    var showRequestPermissionRationaleDialog by mutableStateOf(false)
+    var shouldShowPermissionRequestingRationaleDialog by mutableingStateOf(false)
 
-    /**
-     * 关闭权限请求解释对话框。
-     */
-    fun dismissRequestPermissionRationaleDialog() {
-        showRequestPermissionRationaleDialog = false
+    fun dismissPermissionRequestingRationaleDialog() {
+        shouldShowPermissionRequestingRationaleDialog = false
     }
 
-    /**
-     * 请求权限。
-     */
     @OptIn(ExperimentalPermissionsApi::class)
     fun requestPermission(permissionState: PermissionState) {
-        showRequestPermissionRationaleDialog = false
+        shouldShowPermissionRequestingRationaleDialog = false
         permissionState.launchPermissionRequest()
     }
 
     fun fillFromClipboard(
         clipboardManager: androidx.compose.ui.platform.ClipboardManager
     ) {
+        shouldShowFillingOptionsMenu = false
         clipboardManager.getText()?.text?.let { text ->
             Regex("ScorerAddress:h(.+)p(.+)").find(text)?.groupValues?.let {
                 host = it[1]
@@ -780,12 +689,8 @@ class ConnectingScreenViewModel : ViewModel() {
                 getSeats()
             }
         }
-        showFillingOptions = false
     }
 
-    /**
-     * 导航到主页。
-     */
     private fun NavController.navigateToMain(
         host: String, port: Int, password: Int, seat: Int, isServer: Boolean = false
     ) {
