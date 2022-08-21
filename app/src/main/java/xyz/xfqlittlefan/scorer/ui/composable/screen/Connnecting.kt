@@ -260,43 +260,40 @@ internal fun ConnectingScreenViewModel.Seats() {
 
 @Composable
 internal fun ConnectingScreenViewModel.Buttons(mainViewModel: MainViewModel) {
+    @Composable
+    fun MyButton(enabled: Boolean, onClick: () -> Unit, text: String) {
+        AnimatedVisibility(
+            visible = enabled, enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
+            exit = shrinkOut(shrinkTowards = Alignment.Center) + fadeOut()
+        ) {
+            Button(
+                onClick = onClick, modifier = Modifier.padding(horizontal = 5.dp),
+                enabled = enabled
+            ) {
+                Text(text)
+            }
+        }
+    }
+
     FlowRow(
         mainAxisAlignment = FlowMainAxisAlignment.Center,
         crossAxisAlignment = FlowCrossAxisAlignment.Center
     ) {
-        (actionsEnabled).let { visible ->
-            AnimatedVisibility(visible = visible) {
-                Button(
-                    onClick = this@Buttons::getSeats,
-                    modifier = Modifier.padding(horizontal = 5.dp),
-                    enabled = visible
-                ) {
-                    Text(stringResource(R.string.page_content_connecting_button_get_seats))
-                }
-            }
-        }
-        (gettingSeatsJob != null && gettingSeatsJob?.isActive == true || shouldShowSeats).let { visible ->
-            AnimatedVisibility(visible = visible) {
-                Button(
-                    onClick = this@Buttons::cancelSelectingSeats,
-                    modifier = Modifier.padding(horizontal = 5.dp),
-                    enabled = visible
-                ) {
-                    Text(stringResource(R.string.page_content_connecting_button_cancel_connection))
-                }
-            }
-        }
-        (mainViewModel.server != null).let { visible ->
-            AnimatedVisibility(visible = visible) {
-                Button(
-                    onClick = this@Buttons::showRoomInfoDialog,
-                    modifier = Modifier.padding(horizontal = 5.dp),
-                    enabled = visible
-                ) {
-                    Text(stringResource(R.string.page_content_connecting_button_room_information))
-                }
-            }
-        }
+        MyButton(
+            enabled = actionsEnabled,
+            onClick = this@Buttons::getSeats,
+            text = stringResource(R.string.page_content_connecting_button_get_seats)
+        )
+        MyButton(
+            enabled = gettingSeatsJob != null && gettingSeatsJob?.isActive == true || shouldShowSeats,
+            onClick = this@Buttons::cancelSelectingSeats,
+            text = stringResource(R.string.page_content_connecting_button_cancel_connection)
+        )
+        MyButton(
+            enabled = mainViewModel.server != null,
+            onClick = this@Buttons::showRoomInfoDialog,
+            text = stringResource(R.string.page_content_connecting_button_room_information)
+        )
     }
 }
 
