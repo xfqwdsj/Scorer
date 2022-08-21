@@ -15,7 +15,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.*
@@ -270,10 +271,7 @@ internal fun ConnectingScreenViewModel.Buttons(mainViewModel: MainViewModel) {
                     modifier = Modifier.padding(horizontal = 5.dp),
                     enabled = visible
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Done,
-                        contentDescription = stringResource(R.string.page_content_connecting_button_get_seats)
-                    )
+                    Text(stringResource(R.string.page_content_connecting_button_get_seats))
                 }
             }
         }
@@ -284,10 +282,7 @@ internal fun ConnectingScreenViewModel.Buttons(mainViewModel: MainViewModel) {
                     modifier = Modifier.padding(horizontal = 5.dp),
                     enabled = visible
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Cancel,
-                        contentDescription = stringResource(R.string.page_content_connecting_button_cancel_connection)
-                    )
+                    Text(stringResource(R.string.page_content_connecting_button_cancel_connection))
                 }
             }
         }
@@ -298,10 +293,7 @@ internal fun ConnectingScreenViewModel.Buttons(mainViewModel: MainViewModel) {
                     modifier = Modifier.padding(horizontal = 5.dp),
                     enabled = visible
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = stringResource(R.string.page_content_connecting_button_room_information)
-                    )
+                    Text(stringResource(R.string.page_content_connecting_button_room_information))
                 }
             }
         }
