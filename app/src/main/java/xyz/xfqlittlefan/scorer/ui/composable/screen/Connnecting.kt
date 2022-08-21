@@ -123,7 +123,7 @@ internal fun ConnectingScreenViewModel.ActionButtonCreatingRoom(
 ) {
     IconButton(
         onClick = { createRoom(mainViewModel) },
-        enabled = mainViewModel.server == null && !shouldShowSeats
+        enabled = mainViewModel.server == null && actionsEnabled
     ) {
         Icon(
             imageVector = Icons.Default.Add, contentDescription = stringResource(
@@ -184,7 +184,7 @@ internal fun ConnectingScreenViewModel.TextFieldHost() {
         value = host,
         onValueChange = this::changeHost,
         modifier = Modifier.width(TextFieldDefaults.MinWidth),
-        enabled = !shouldShowSeats,
+        enabled = actionsEnabled,
         label = {
             Text(stringResource(R.string.page_content_connecting_text_field_host_label))
         },
@@ -207,7 +207,7 @@ internal fun ConnectingScreenViewModel.TextFieldPort() {
         value = port,
         onValueChange = this::changePort,
         modifier = Modifier.width(TextFieldDefaults.MinWidth),
-        enabled = !shouldShowSeats,
+        enabled = actionsEnabled,
         label = {
             Text(stringResource(R.string.page_content_connecting_text_field_port_label))
         },
@@ -257,25 +257,18 @@ internal fun ConnectingScreenViewModel.Seats() {
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 internal fun ConnectingScreenViewModel.Buttons(mainViewModel: MainViewModel) {
-    AnimatedContent(
-        targetState = mapOf(
-            ButtonType.GettingSeats to !shouldShowSeats,
-            ButtonType.CancelingConnection to (gettingSeatsJob != null || shouldShowSeats),
-            ButtonType.ShowingRoomInfo to (mainViewModel.server != null)
-        )
-    ) { buttonVisibility ->
-        FlowRow(
-            mainAxisAlignment = FlowMainAxisAlignment.Center,
-            crossAxisAlignment = FlowCrossAxisAlignment.Center
-        ) {
-            if (buttonVisibility[ButtonType.GettingSeats] == true) {
+    FlowRow(
+        mainAxisAlignment = FlowMainAxisAlignment.Center,
+        crossAxisAlignment = FlowCrossAxisAlignment.Center
+    ) {
+        (actionsEnabled).let { visible ->
+            AnimatedVisibility(visible = visible) {
                 Button(
                     onClick = this@Buttons::getSeats,
                     modifier = Modifier.padding(horizontal = 5.dp),
-                    enabled = buttonVisibility[ButtonType.GettingSeats] == true
+                    enabled = visible
                 ) {
                     Icon(
                         imageVector = Icons.Default.Done,
@@ -283,11 +276,13 @@ internal fun ConnectingScreenViewModel.Buttons(mainViewModel: MainViewModel) {
                     )
                 }
             }
-            if (buttonVisibility[ButtonType.CancelingConnection] == true) {
+        }
+        (gettingSeatsJob != null && gettingSeatsJob?.isActive == true || shouldShowSeats).let { visible ->
+            AnimatedVisibility(visible = visible) {
                 Button(
                     onClick = this@Buttons::cancelSelectingSeats,
                     modifier = Modifier.padding(horizontal = 5.dp),
-                    enabled = buttonVisibility[ButtonType.CancelingConnection] == true
+                    enabled = visible
                 ) {
                     Icon(
                         imageVector = Icons.Default.Cancel,
@@ -295,11 +290,13 @@ internal fun ConnectingScreenViewModel.Buttons(mainViewModel: MainViewModel) {
                     )
                 }
             }
-            if (buttonVisibility[ButtonType.ShowingRoomInfo] == true) {
+        }
+        (mainViewModel.server != null).let { visible ->
+            AnimatedVisibility(visible = visible) {
                 Button(
                     onClick = this@Buttons::showRoomInfoDialog,
                     modifier = Modifier.padding(horizontal = 5.dp),
-                    enabled = buttonVisibility[ButtonType.ShowingRoomInfo] == true
+                    enabled = visible
                 ) {
                     Icon(
                         imageVector = Icons.Default.Info,
@@ -450,6 +447,9 @@ class ConnectingScreenViewModel : ViewModel() {
 
     var isPortError by mutableStateOf(false)
 
+    val actionsEnabled
+        get() = gettingSeatsJob == null || gettingSeatsJob?.isCompleted == true || !shouldShowSeats
+
     fun changeHost(newValue: String) {
         host = newValue
         isHostError = newValue.isNotEmpty() && try {
@@ -478,7 +478,7 @@ class ConnectingScreenViewModel : ViewModel() {
     var gettingSeatsJob: Job? = null
 
     fun getSeats() {
-        if (gettingSeatsJob != null) {
+        if (gettingSeatsJob != null && gettingSeatsJob?.isActive == true) {
             LogUtil.d("Already getting seats.", "Scorer.GettingSeats")
             return
         }
@@ -703,8 +703,4 @@ class ConnectingScreenViewModel : ViewModel() {
             launchSingleTop = true
         }
     }
-}
-
-internal enum class ButtonType {
-    GettingSeats, CancelingConnection, Connecting, ShowingRoomInfo
 }
