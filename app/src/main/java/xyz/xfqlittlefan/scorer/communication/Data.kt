@@ -1,30 +1,28 @@
 package xyz.xfqlittlefan.scorer.communication
 
-import androidx.annotation.StringRes
-
 /**
  * 内容协商时发送的消息。
  *
  * @param versionVerified 版本是否匹配。
  * @param password 服务器的密码，版本不匹配时为 null。
- * @param seats 服务器的座位集，值为资源 ID，版本不匹配时为 null。
+ * @param seats 服务器的座位集，值为名称，版本不匹配时为 null。
  */
 @kotlinx.serialization.Serializable
 data class WebSocketServerInfo(
-    val versionVerified: Boolean, val password: Int? = null, val seats: Map<Int, Int>? = null
+    val versionVerified: Boolean, val password: Int? = null, val seats: Map<Int, String>? = null
 ) {
-    constructor(password: Int, seats: Map<Int, Int>) : this(true, password, seats)
+    constructor(password: Int, seats: Map<Int, String>) : this(true, password, seats)
     constructor() : this(false)
 }
 
 /**
  * 座位。
  *
- * @param nameResource 座位的显示名称。
+ * @param name 座位的显示名称。
  * @param joinable 该座位当前是否可加入。
  */
 @kotlinx.serialization.Serializable
-data class Seat(@StringRes val nameResource: Int, var joinable: Boolean = true)
+data class Seat(val name: String, var joinable: Boolean = true)
 
 /**
  * 消息。

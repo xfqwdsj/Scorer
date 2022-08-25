@@ -13,7 +13,6 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.serialization.SerializationException
 import xyz.xfqlittlefan.scorer.BuildConfig
-import xyz.xfqlittlefan.scorer.R
 import xyz.xfqlittlefan.scorer.util.decodeFromJson
 import xyz.xfqlittlefan.scorer.util.encodeToJson
 
@@ -24,12 +23,7 @@ import xyz.xfqlittlefan.scorer.util.encodeToJson
  * @param password 指定连接到服务器所需的密码（0~65535）。如不填入或填入错误值会指定范围内的一个随机数。
  */
 class RoomServerLauncher(
-    private val seats: Map<Int, Seat> = mapOf(
-        0 to Seat(R.string.player_east),
-        1 to Seat(R.string.player_south),
-        2 to Seat(R.string.player_west),
-        3 to Seat(R.string.player_north)
-    ), private var password: Int = -1
+    private val seats: Map<Int, Seat>, private var password: Int = -1
 ) {
     init {
         if (password < 0 || password > 65535) {
@@ -64,7 +58,7 @@ class RoomServerLauncher(
                     if (clientVersion == BuildConfig.VERSION_CODE) {
                         WebSocketServerInfo(password,
                             seats.filter { it.value.joinable }
-                                .mapValues { entry -> entry.value.nameResource })
+                                .mapValues { entry -> entry.value.name })
                     } else {
                         WebSocketServerInfo()
                     }

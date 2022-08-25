@@ -1,4 +1,4 @@
-package xyz.xfqlittlefan.scorer.ui.composable.screen
+package xyz.xfqlittlefan.scorer.ui.composables.screen
 
 import android.Manifest
 import android.app.Activity
@@ -7,6 +7,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
@@ -53,41 +54,33 @@ import xyz.xfqlittlefan.scorer.communication.Client
 import xyz.xfqlittlefan.scorer.communication.RoomAddressQRCode
 import xyz.xfqlittlefan.scorer.communication.RoomServerLauncher
 import xyz.xfqlittlefan.scorer.communication.WebSocketServerInfo
-import xyz.xfqlittlefan.scorer.ui.activity.main.LocalMainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.scanner.ScannerActivity
-import xyz.xfqlittlefan.scorer.ui.composable.QRCode
-import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
-import xyz.xfqlittlefan.scorer.ui.composable.TextFieldWithMessage
+import xyz.xfqlittlefan.scorer.ui.composables.*
 import xyz.xfqlittlefan.scorer.util.*
+import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.NetworkInterface
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun ConnectingScreenViewModel.Connecting(
-    navController: NavController,
-    windowSize: WindowWidthSizeClass
-) {
+fun ConnectingScreenViewModel.Connecting() {
     val mainViewModel = LocalMainViewModel.current
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
     )
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.getStringExtra("result")?.let { onQRScanned(it) }
-        }
-    }
+        contract = ActivityResultContracts.StartActivityForResult(),
+        onResult = this::onActivityResult
+    )
 
-    ScorerScaffold(navController = navController,
-        windowSize = windowSize,
+    ScorerScaffold(
         title = stringResource(R.string.page_title_connecting),
         actions = {
             ActionButtonCreatingRoom(mainViewModel)
             ActionButtonFillAddress(cameraPermissionState, launcher)
         }) {
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -97,7 +90,7 @@ fun ConnectingScreenViewModel.Connecting(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Title(windowSize)
+            Title()
             Spacer(Modifier.height(20.dp))
             TextFieldHost()
             Spacer(Modifier.height(20.dp))
@@ -144,32 +137,38 @@ internal fun ConnectingScreenViewModel.ActionButtonFillAddress(
     cameraPermissionState: PermissionState,
     launcher: ActivityResultLauncher<Intent>
 ) {
-    IconButton(onClick = this::showFillingOptionsMenu) {
+    IconButton(onClick = this::showFillingOptionsMenu, enabled = actionsEnabled) {
         Icon(
             imageVector = Icons.Default.Edit,
             contentDescription = stringResource(R.string.page_content_connecting_action_fill)
         )
-    }
-    DropdownMenu(
-        expanded = shouldShowFillingOptionsMenu,
-        onDismissRequest = this::dismissFillingOptionsMenu
-    ) {
-        val context = LocalContext.current
-        val clipboardManager = LocalClipboardManager.current
+        DropdownMenu(
+            expanded = shouldShowFillingOptionsMenu,
+            onDismissRequest = this::dismissFillingOptionsMenu
+        ) {
+            val context = LocalContext.current
+            val clipboardManager = LocalClipboardManager.current
 
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.page_content_connecting_action_fill_way_scan_qr)) },
-            onClick = { scanQR(cameraPermissionState, context, launcher) })
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.page_content_connecting_action_fill_way_from_clipboard)) },
-            onClick = { fillFromClipboard(clipboardManager) })
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.page_content_connecting_action_fill_way_scan_qr)) },
+                onClick = { scanQR(cameraPermissionState, context, launcher) })
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.page_content_connecting_action_fill_way_from_clipboard)) },
+                onClick = { fillFromClipboard(clipboardManager) })
+
+            LaunchedEffect(actionsEnabled) {
+                if (!actionsEnabled) {
+                    dismissFillingOptionsMenu()
+                }
+            }
+        }
     }
 }
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-internal fun Title(windowSize: WindowWidthSizeClass) {
-    AnimatedContent(targetState = windowSize == WindowWidthSizeClass.Compact) {
+internal fun Title() {
+    AnimatedContent(targetState = LocalWindowSize.current == WindowWidthSizeClass.Compact) {
         Text(
             text = stringResource(if (it) R.string.page_content_connecting_title_0 else R.string.page_content_connecting_title_1),
             textAlign = TextAlign.Center,
@@ -237,12 +236,12 @@ internal fun ConnectingScreenViewModel.Seats() {
                 mainAxisAlignment = FlowMainAxisAlignment.Center,
                 crossAxisAlignment = FlowCrossAxisAlignment.Center
             ) {
-                seats?.forEach { seat, res, _, _ ->
+                seats?.forEach { seat, name, _, _ ->
                     InputChip(
                         selected = selectedSeat == seat,
-                        onClick = { selectedSeat = seat },
+                        onClick = { selectSeat(seat) },
                         label = {
-                            Text(stringResource(res))
+                            Text(name)
                         },
                         enabled = shouldShowSeats
                     )
@@ -285,7 +284,7 @@ internal fun ConnectingScreenViewModel.Buttons(mainViewModel: MainViewModel) {
             text = stringResource(R.string.page_content_connecting_button_get_seats)
         )
         MyButton(
-            enabled = gettingSeatsJob != null && gettingSeatsJob?.isActive == true || shouldShowSeats,
+            enabled = gettingSeatsJob != null || shouldShowSeats,
             onClick = this@Buttons::cancelSelectingSeats,
             text = stringResource(R.string.page_content_connecting_button_cancel_connection)
         )
@@ -429,18 +428,75 @@ internal fun ConnectingScreenViewModel.RequestPermissionRationaleDialog(
 
 class ConnectingScreenViewModel : ViewModel() {
     var host by mutableStateOf("")
+        private set
 
     var isHostError by mutableStateOf(false)
+        private set
 
     var port by mutableStateOf("")
+        private set
 
     var isPortError by mutableStateOf(false)
+        private set
 
-    val actionsEnabled
-        get() = gettingSeatsJob == null || gettingSeatsJob?.isCompleted == true || !shouldShowSeats
+    /**
+     * 是否显示座位列表，用于控制动画。
+     */
+    var shouldShowSeats by mutableStateOf(false)
+        private set
+
+    var seats by mutableStateOf<Map<Int, String>?>(null)
+        private set
+
+    var selectedSeat by mutableStateOf<Int?>(null)
+        private set
+
+    var gettingSeatsJob: Job? = null
+        private set
+
+    var shouldShowRoomInfoDialog by mutableStateOf(false)
+        private set
+
+    var actionsEnabled by mutableStateOf(!shouldShowSeats && gettingSeatsJob == null)
+        private set
+
+    /**
+     * 在房间信息对话框中显示的地址列表。
+     */
+    var roomInfoAddresses by mutableStateOf(listOf<Pair<String, Int>>())
+        private set
+
+    /**
+     * 显示的地址菜单。
+     */
+    var addressMenuShowingIndex by mutableStateOf<Int?>(null)
+        private set
+
+    /**
+     * 是否显示二维码对话框。
+     */
+    var shouldShowQRDialog by mutableStateOf(false)
+        private set
+
+    var qrContent by mutableStateOf<String?>(null)
+        private set
+
+    /**
+     * 是否显示填充地址选项菜单。
+     */
+    var shouldShowFillingOptionsMenu by mutableStateOf(false)
+        private set
+
+    /**
+     * 是否显示权限请求解释对话框。
+     */
+    var shouldShowPermissionRequestingRationaleDialog by mutableStateOf(false)
+        private set
 
     fun changeHost(newValue: String) {
-        host = newValue
+        if (actionsEnabled) {
+            host = newValue
+        }
         isHostError = newValue.isNotEmpty() && try {
             InetAddress.getByName(newValue)
             false
@@ -450,52 +506,65 @@ class ConnectingScreenViewModel : ViewModel() {
     }
 
     fun changePort(newValue: String) {
-        port = newValue
+        if (actionsEnabled) {
+            port = newValue
+        }
         isPortError =
             newValue.isNotEmpty() && (newValue.toIntOrNull() == null || newValue.toInt() < 0 || newValue.toInt() > 65535)
     }
 
-    /**
-     * 是否显示座位列表，用于控制动画。
-     */
-    var shouldShowSeats by mutableStateOf(false)
+    private fun changeShouldShowSeats(newValue: Boolean) {
+        shouldShowSeats = newValue
+        actionsEnabled = !shouldShowSeats && gettingSeatsJob == null
+    }
 
-    var seats by mutableStateOf<Map<Int, Int>?>(null)
-
-    var selectedSeat by mutableStateOf<Int?>(null)
-
-    var gettingSeatsJob: Job? = null
+    private fun changeGettingSeatsJob(newValue: Job?) {
+        gettingSeatsJob = newValue
+        actionsEnabled = !shouldShowSeats && gettingSeatsJob == null
+    }
 
     fun getSeats() {
-        if (gettingSeatsJob != null && gettingSeatsJob?.isActive == true) {
+        if (gettingSeatsJob != null) {
             LogUtil.d("Already getting seats.", "Scorer.GettingSeats")
             return
         }
 
-        gettingSeatsJob = viewModelScope.launch(Dispatchers.IO) {
+        val finalHost = host.let {
+            if (InetAddress.getByName(it) is Inet6Address) {
+                "[$it]"
+            } else {
+                it
+            }
+        }
+
+        changeGettingSeatsJob(viewModelScope.launch(Dispatchers.IO) {
             try {
                 val info = Client.get {
                     url {
                         protocol = URLProtocol.HTTP
-                        host = this@ConnectingScreenViewModel.host
+                        host = finalHost
                         port = this@ConnectingScreenViewModel.port.toInt()
                         appendPathSegments("join", BuildConfig.VERSION_CODE.toString())
                     }
                 }.body<String>().decodeFromJson<WebSocketServerInfo>()
-                shouldShowSeats = true
+                changeShouldShowSeats(true)
                 seats = info.seats
             } catch (e: Throwable) {
                 e.printStackTrace()
             }
         }.apply {
             invokeOnCompletion {
-                gettingSeatsJob = null
+                changeGettingSeatsJob(null)
             }
-        }
+        })
+    }
+
+    fun selectSeat(seat: Int) {
+        selectedSeat = seat
     }
 
     fun cancelSelectingSeats() {
-        shouldShowSeats = false
+        changeShouldShowSeats(false)
         gettingSeatsJob?.cancel()
     }
 
@@ -504,8 +573,6 @@ class ConnectingScreenViewModel : ViewModel() {
         selectedSeat = null
     }
 
-    var shouldShowRoomInfoDialog by mutableStateOf(false)
-
     fun showRoomInfoDialog() {
         shouldShowRoomInfoDialog = true
     }
@@ -513,16 +580,6 @@ class ConnectingScreenViewModel : ViewModel() {
     fun dismissRoomInfoDialog() {
         shouldShowRoomInfoDialog = false
     }
-
-    /**
-     * 在房间信息对话框中显示的地址列表。
-     */
-    var roomInfoAddresses by mutableStateOf(listOf<Pair<String, Int>>())
-
-    /**
-     * 显示的地址菜单。
-     */
-    var addressMenuShowingIndex by mutableStateOf<Int?>(null)
 
     fun showAddressMenu(index: Int) {
         addressMenuShowingIndex = index
@@ -556,13 +613,6 @@ class ConnectingScreenViewModel : ViewModel() {
         }
     }
 
-    /**
-     * 是否显示二维码对话框。
-     */
-    var shouldShowQRDialog by mutableStateOf(false)
-
-    var qrContent by mutableStateOf<String?>(null)
-
     fun showQR(host: String, port: Int) {
         qrContent = RoomAddressQRCode(host, port).encodeToJson()
         shouldShowQRDialog = true
@@ -579,7 +629,7 @@ class ConnectingScreenViewModel : ViewModel() {
 
     fun createRoom(viewModel: MainViewModel) {
         viewModelScope.launch(Dispatchers.IO) {
-            val launcher = RoomServerLauncher()
+            val launcher = RoomServerLauncher(mapOf())
             launcher.server.start()
             val host = InetAddress.getLocalHost().hostAddress!!
             val port = launcher.server.resolvedConnectors().first().port
@@ -612,12 +662,11 @@ class ConnectingScreenViewModel : ViewModel() {
         }
     }
 
-    /**
-     * 是否显示填充地址选项菜单。
-     */
-    var shouldShowFillingOptionsMenu by mutableStateOf(false)
-
     fun showFillingOptionsMenu() {
+        if (!actionsEnabled) {
+            shouldShowFillingOptionsMenu = false
+            return
+        }
         shouldShowFillingOptionsMenu = true
     }
 
@@ -639,23 +688,23 @@ class ConnectingScreenViewModel : ViewModel() {
         }
     }
 
-    fun onQRScanned(text: String) {
-        try {
-            val info = text.decodeFromJson<RoomAddressQRCode>()
-            host = info.host
-            port = info.port.toString()
-            getSeats()
-        } catch (e: SerializationException) {
-            e.printStackTrace()
-        } catch (e: Throwable) {
-            e.printStackTrace()
+    fun onActivityResult(result: ActivityResult) {
+        if (!actionsEnabled) return
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.getStringExtra("result")?.let { text ->
+                try {
+                    val info = text.decodeFromJson<RoomAddressQRCode>()
+                    host = info.host
+                    port = info.port.toString()
+                    getSeats()
+                } catch (e: SerializationException) {
+                    e.printStackTrace()
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                }
+            }
         }
     }
-
-    /**
-     * 是否显示权限请求解释对话框。
-     */
-    var shouldShowPermissionRequestingRationaleDialog by mutableStateOf(false)
 
     fun dismissPermissionRequestingRationaleDialog() {
         shouldShowPermissionRequestingRationaleDialog = false
@@ -671,6 +720,7 @@ class ConnectingScreenViewModel : ViewModel() {
         clipboardManager: androidx.compose.ui.platform.ClipboardManager
     ) {
         shouldShowFillingOptionsMenu = false
+        if (!actionsEnabled) return
         clipboardManager.getText()?.text?.let { text ->
             Regex("ScorerAddress:h(.+)p(.+)").find(text)?.groupValues?.let {
                 host = it[1]

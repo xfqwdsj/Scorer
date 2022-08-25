@@ -1,4 +1,4 @@
-package xyz.xfqlittlefan.scorer.ui.composable
+package xyz.xfqlittlefan.scorer.ui.composables
 
 import android.graphics.Bitmap
 import android.graphics.Color

@@ -35,7 +35,7 @@ fun ScorerTheme(
 
     CompositionLocalProvider(LocalDarkTheme provides darkTheme) {
         MaterialTheme(
-            colorScheme = colorScheme, typography = Typography, content = content
+            colorScheme = colorScheme, content = content
         )
     }
 }

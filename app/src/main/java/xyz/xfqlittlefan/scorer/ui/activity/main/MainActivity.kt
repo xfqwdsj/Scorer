@@ -13,9 +13,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import xyz.xfqlittlefan.scorer.ui.composable.screen.Connecting
-import xyz.xfqlittlefan.scorer.ui.composable.screen.ConnectingScreenViewModel
-import xyz.xfqlittlefan.scorer.ui.composable.screen.Main
+import xyz.xfqlittlefan.scorer.ui.composables.LocalMainViewModel
+import xyz.xfqlittlefan.scorer.ui.composables.LocalNavController
+import xyz.xfqlittlefan.scorer.ui.composables.LocalWindowSize
+import xyz.xfqlittlefan.scorer.ui.composables.screen.Connecting
+import xyz.xfqlittlefan.scorer.ui.composables.screen.ConnectingScreenViewModel
+import xyz.xfqlittlefan.scorer.ui.composables.screen.Main
 import xyz.xfqlittlefan.scorer.ui.theme.ScorerTheme
 
 class MainActivity : ComponentActivity() {
@@ -29,13 +32,14 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val windowSize = calculateWindowSizeClass(activity = this).widthSizeClass
 
-                CompositionLocalProvider(LocalMainViewModel provides viewModel) {
+                CompositionLocalProvider(
+                    LocalMainViewModel provides viewModel,
+                    LocalNavController provides navController,
+                    LocalWindowSize provides windowSize
+                ) {
                     NavHost(navController = navController, startDestination = "connecting") {
                         composable("connecting") {
-                            viewModel<ConnectingScreenViewModel>().Connecting(
-                                navController,
-                                windowSize
-                            )
+                            viewModel<ConnectingScreenViewModel>().Connecting()
                         }
                         composable(
                             "main/{host}/{port}/{password}/{seat}?isServer={isServer}",
@@ -57,11 +61,10 @@ class MainActivity : ComponentActivity() {
                                 port = it.arguments!!.getInt("port"),
                                 password = it.arguments!!.getInt("password"),
                                 seat = it.arguments!!.getInt("seat"),
-                                isServer = it.arguments!!.getBoolean("isServer", false),
-                                navController,
-                                windowSize
+                                isServer = it.arguments!!.getBoolean("isServer", false)
                             )
                         }
+
                     }
                 }
             }

@@ -1,4 +1,4 @@
-package xyz.xfqlittlefan.scorer.ui.composable
+package xyz.xfqlittlefan.scorer.ui.composables
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
@@ -11,37 +11,34 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.navigation.NavController
 import xyz.xfqlittlefan.scorer.R
 import xyz.xfqlittlefan.scorer.util.allBars
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScorerScaffold(
-    navController: NavController? = null,
-    windowSize: WindowWidthSizeClass,
     title: String,
     actions: @Composable () -> Unit = {},
     navigationIcon: @Composable () -> Unit = {
-        if (navController != null) {
-            AnimatedVisibility(
-                visible = navController.graph.arguments.isNotEmpty(),
-                enter = expandHorizontally(),
-                exit = shrinkHorizontally()
-            ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack, contentDescription = stringResource(
-                            R.string.action_back
-                        )
+        val navController = LocalNavController.current
+        AnimatedVisibility(
+            visible = navController.graph.arguments.isNotEmpty(),
+            enter = expandHorizontally(),
+            exit = shrinkHorizontally()
+        ) {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack, contentDescription = stringResource(
+                        R.string.action_back
                     )
-                }
+                )
             }
         }
     },
     navigationItems: (@Composable NavigationBarScope.() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
+    val windowSize = LocalWindowSize.current
     Scaffold(topBar = {
         AnimatedEnterExit(
             visible = windowSize == WindowWidthSizeClass.Compact,

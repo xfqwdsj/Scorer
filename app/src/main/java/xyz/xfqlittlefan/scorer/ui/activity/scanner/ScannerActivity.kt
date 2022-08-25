@@ -24,8 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import xyz.xfqlittlefan.scorer.R
 import xyz.xfqlittlefan.scorer.qr.QRAnalyzer
-import xyz.xfqlittlefan.scorer.ui.composable.CameraX
-import xyz.xfqlittlefan.scorer.ui.composable.ScorerScaffold
+import xyz.xfqlittlefan.scorer.ui.composables.CameraX
+import xyz.xfqlittlefan.scorer.ui.composables.ScorerScaffold
 import xyz.xfqlittlefan.scorer.ui.theme.ScorerTheme
 
 class ScannerActivity : ComponentActivity() {

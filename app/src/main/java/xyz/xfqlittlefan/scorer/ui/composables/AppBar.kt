@@ -1,4 +1,4 @@
-package xyz.xfqlittlefan.scorer.ui.composable
+package xyz.xfqlittlefan.scorer.ui.composables
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
