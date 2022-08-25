@@ -28,14 +28,12 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             ScorerTheme {
-                val viewModel = viewModel<MainViewModel>()
                 val navController = rememberNavController()
-                val windowSize = calculateWindowSizeClass(activity = this).widthSizeClass
 
                 CompositionLocalProvider(
-                    LocalMainViewModel provides viewModel,
+                    LocalMainViewModel provides viewModel(),
                     LocalNavController provides navController,
-                    LocalWindowSize provides windowSize
+                    LocalWindowSize provides calculateWindowSizeClass(activity = this).widthSizeClass
                 ) {
                     NavHost(navController = navController, startDestination = "connecting") {
                         composable("connecting") {

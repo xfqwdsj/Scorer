@@ -33,12 +33,12 @@ class ScannerActivity : ComponentActivity() {
         setContent {
             ScorerTheme {
                 ScorerScaffold(
-                    title = stringResource(R.string.page_title_scanner),
+                    title = stringResource(R.string.scan_qr),
                     navigationIcon = {
                         IconButton(onClick = { finish() }) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = stringResource(R.string.action_close)
+                                contentDescription = stringResource(R.string.close)
                             )
                         }
                     }) {

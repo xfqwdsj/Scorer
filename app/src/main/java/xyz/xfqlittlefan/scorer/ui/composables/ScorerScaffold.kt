@@ -29,7 +29,7 @@ fun ScorerScaffold(
             IconButton(onClick = { navController.popBackStack() }) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack, contentDescription = stringResource(
-                        R.string.action_back
+                        R.string.back
                     )
                 )
             }
