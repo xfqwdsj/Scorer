@@ -14,8 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,13 +27,12 @@ import xyz.xfqlittlefan.scorer.ui.composables.ScorerScaffold
 import xyz.xfqlittlefan.scorer.ui.theme.ScorerTheme
 
 class ScannerActivity : ComponentActivity() {
-    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             ScorerTheme {
-                ScorerScaffold(windowSize = calculateWindowSizeClass(activity = this).widthSizeClass,
+                ScorerScaffold(
                     title = stringResource(R.string.page_title_scanner),
                     navigationIcon = {
                         IconButton(onClick = { finish() }) {
