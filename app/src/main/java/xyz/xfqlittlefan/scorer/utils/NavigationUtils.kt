@@ -2,6 +2,7 @@ package xyz.xfqlittlefan.scorer.utils
 
 import androidx.lifecycle.Observer
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 
 fun <T> NavController.registerResult(key: String, onResult: (result: T) -> Unit) {
     val liveData = currentBackStackEntry?.savedStateHandle?.getLiveData<T>(key)
@@ -18,3 +19,6 @@ fun <T> NavController.registerResult(key: String, onResult: (result: T) -> Unit)
 fun <T> NavController.sendResult(key: String, result: T) {
     previousBackStackEntry?.savedStateHandle?.set(key, result)
 }
+
+fun Sequence<NavDestination>?.isRouteMatched(route: String) =
+    this?.any { it.route == route } == true

@@ -12,12 +12,14 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.*
@@ -33,6 +35,7 @@ import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -86,24 +89,14 @@ fun ConnectingScreenViewModel.Connecting() {
                 )
             )
         },
-        navigationItems = {
-            val backStack by pageController.currentBackStackEntryAsState()
-            val destination = backStack?.destination
-            listOf("main", "room_info").forEach { route ->
-                NavigationBarItem(
-                    selected = destination?.hierarchy?.any { it.route == route } == true,
-                    onClick = {
-                        pageController.navigate(route) {
-                            popUpTo("main") {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    icon = { Icon(imageVector = Icons.Default.Home, contentDescription = null) })
+        navigationItems = if (LocalMainViewModel.current.server != null) {
+            {
+                val hierarchy =
+                    pageController.currentBackStackEntryAsState().value?.destination?.hierarchy
+                NavigationItemMain(this@Connecting, hierarchy, pageController)
+                NavigationItemRoomInfo(this@Connecting, hierarchy, pageController)
             }
-        }
+        } else null
     ) {
         NavHost(navController = pageController, startDestination = "main") {
             composable("main") {
@@ -134,51 +127,7 @@ fun ConnectingScreenViewModel.Connecting() {
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    ListItem(
-                        headlineText = {
-                            Text(stringResource(R.string.room_addresses))
-                        },
-                        modifier = Modifier.clickable { },
-                        supportingText = {
-                            Row(Modifier.horizontalScroll(rememberScrollState())) {
-                                AssistChip(
-                                    onClick = { },
-                                    label = { Text(stringResource(R.string.qr)) },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.QrCode,
-                                            contentDescription = stringResource(R.string.qr)
-                                        )
-                                    })
-                                Spacer(Modifier.width(10.dp))
-                                AssistChip(
-                                    onClick = {},
-                                    label = { Text(stringResource(android.R.string.copy)) },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.ContentCopy,
-                                            contentDescription = stringResource(android.R.string.copy)
-                                        )
-                                    })
-                                Spacer(Modifier.width(10.dp))
-                                AssistChip(
-                                    onClick = { },
-                                    label = { Text(stringResource(R.string.share)) },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.Share,
-                                            contentDescription = stringResource(R.string.share)
-                                        )
-                                    })
-                            }
-                        },
-                        trailingContent = {
-                            Icon(
-                                imageVector = Icons.Default.NavigateNext,
-                                contentDescription = stringResource(R.string.view)
-                            )
-                        }
-                    )
+
                 }
             }
         }
@@ -191,6 +140,13 @@ fun ConnectingScreenViewModel.Connecting() {
         }
         if (shouldShowPermissionRequestingRationaleDialog && cameraPermissionState.status is PermissionStatus.Denied) {
             RequestPermissionRationaleDialog(cameraPermissionState)
+        }
+    }
+
+    val server = LocalMainViewModel.current.server
+    LaunchedEffect(server) {
+        if (server == null) {
+            navigatePage(pageController, "main")
         }
     }
 }
@@ -246,6 +202,46 @@ internal fun ConnectingScreenViewModel.ActionButtonFillAddress(
             }
         }
     }
+}
+
+@Composable
+internal fun NavigationBarScope.NavigationItemMain(
+    viewModel: ConnectingScreenViewModel,
+    hierarchy: Sequence<NavDestination>?,
+    pageController: NavController
+) {
+    NavigationBarItem(
+        selected = hierarchy.isRouteMatched("main"),
+        onClick = { viewModel.navigatePage(pageController, "main") },
+        icon = {
+            Icon(
+                imageVector = Icons.Default.Link,
+                contentDescription = stringResource(R.string.connecting)
+            )
+        },
+        enabled = LocalMainViewModel.current.server != null,
+        label = { Text(stringResource(R.string.connecting)) }
+    )
+}
+
+@Composable
+internal fun NavigationBarScope.NavigationItemRoomInfo(
+    viewModel: ConnectingScreenViewModel,
+    hierarchy: Sequence<NavDestination>?,
+    pageController: NavController
+) {
+    NavigationBarItem(
+        selected = hierarchy.isRouteMatched("room_info"),
+        onClick = { viewModel.navigatePage(pageController, "room_info") },
+        icon = {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = stringResource(R.string.room_information)
+            )
+        },
+        enabled = LocalMainViewModel.current.server != null,
+        label = { Text(stringResource(R.string.room_information)) }
+    )
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -811,6 +807,16 @@ class ConnectingScreenViewModel : ViewModel() {
                 port = it[2]
                 getSeats()
             }
+        }
+    }
+
+    fun navigatePage(pageController: NavController, route: String) {
+        pageController.navigate(route) {
+            popUpTo("main") {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
         }
     }
 
