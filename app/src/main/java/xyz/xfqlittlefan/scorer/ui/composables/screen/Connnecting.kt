@@ -12,6 +12,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -61,7 +62,7 @@ import xyz.xfqlittlefan.scorer.communication.WebSocketServerInfo
 import xyz.xfqlittlefan.scorer.ui.activity.main.MainViewModel
 import xyz.xfqlittlefan.scorer.ui.activity.scanner.ScannerActivity
 import xyz.xfqlittlefan.scorer.ui.composables.*
-import xyz.xfqlittlefan.scorer.util.*
+import xyz.xfqlittlefan.scorer.utils.*
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -109,7 +110,7 @@ fun ConnectingScreenViewModel.Connecting() {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .windowInsetsPadding(WindowInsets.allBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+                        .windowInsetsPadding(WindowInsets.allBars.only(WindowInsetsSides.Content))
                         .verticalScroll(rememberScrollState())
                         .padding(20.dp),
                     verticalArrangement = Arrangement.Center,
@@ -129,9 +130,8 @@ fun ConnectingScreenViewModel.Connecting() {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .windowInsetsPadding(WindowInsets.allBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+                        .windowInsetsPadding(WindowInsets.allBars.only(WindowInsetsSides.Content))
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     ListItem(
@@ -140,7 +140,7 @@ fun ConnectingScreenViewModel.Connecting() {
                         },
                         modifier = Modifier.clickable { },
                         supportingText = {
-                            FlowRow {
+                            Row(Modifier.horizontalScroll(rememberScrollState())) {
                                 AssistChip(
                                     onClick = { },
                                     label = { Text(stringResource(R.string.qr)) },
@@ -150,6 +150,7 @@ fun ConnectingScreenViewModel.Connecting() {
                                             contentDescription = stringResource(R.string.qr)
                                         )
                                     })
+                                Spacer(Modifier.width(10.dp))
                                 AssistChip(
                                     onClick = {},
                                     label = { Text(stringResource(android.R.string.copy)) },
@@ -159,6 +160,7 @@ fun ConnectingScreenViewModel.Connecting() {
                                             contentDescription = stringResource(android.R.string.copy)
                                         )
                                     })
+                                Spacer(Modifier.width(10.dp))
                                 AssistChip(
                                     onClick = { },
                                     label = { Text(stringResource(R.string.share)) },
@@ -171,12 +173,10 @@ fun ConnectingScreenViewModel.Connecting() {
                             }
                         },
                         trailingContent = {
-                            IconButton(onClick = { }) {
-                                Icon(
-                                    imageVector = Icons.Default.NavigateNext,
-                                    contentDescription = stringResource(R.string.view)
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Default.NavigateNext,
+                                contentDescription = stringResource(R.string.view)
+                            )
                         }
                     )
                 }

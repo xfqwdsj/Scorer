@@ -1,4 +1,4 @@
-package xyz.xfqlittlefan.scorer.util
+package xyz.xfqlittlefan.scorer.utils
 
 inline fun <K, V> Map<K, V>.forEach(action: (key: K, value: V, isFirst: Boolean, isLast: Boolean) -> Unit) {
     val entries = iterator()

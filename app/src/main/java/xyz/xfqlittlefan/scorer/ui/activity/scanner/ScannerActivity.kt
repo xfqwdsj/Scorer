@@ -41,7 +41,8 @@ class ScannerActivity : ComponentActivity() {
                                 contentDescription = stringResource(R.string.close)
                             )
                         }
-                    }) {
+                    }
+                ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -54,16 +55,23 @@ class ScannerActivity : ComponentActivity() {
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(70.dp))
                         ) {
-                            CameraX(modifier = Modifier.fillMaxSize(), cameraSelectorBuilder = {
-                                requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                            }, imageAnalyzer = QRAnalyzer(onSuccessListener = { barcodes ->
-                                barcodes.firstOrNull()?.let {
-                                    setResult(RESULT_OK, Intent().apply {
-                                        putExtra("result", it.rawValue)
-                                    })
-                                    finish()
-                                }
-                            }))
+                            CameraX(
+                                modifier = Modifier.fillMaxSize(),
+                                cameraSelectorBuilder = {
+                                    requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                                },
+                                imageAnalyzer = QRAnalyzer(
+                                    onSuccessListener = { barcodes ->
+                                        barcodes.firstOrNull()?.let {
+                                            setResult(RESULT_OK, Intent().apply {
+                                                putExtra("result", it.rawValue)
+                                            }
+                                            )
+                                            finish()
+                                        }
+                                    }
+                                )
+                            )
                         }
                     }
                 }

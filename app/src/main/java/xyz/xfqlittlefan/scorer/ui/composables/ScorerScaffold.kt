@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import xyz.xfqlittlefan.scorer.R
-import xyz.xfqlittlefan.scorer.util.allBars
+import xyz.xfqlittlefan.scorer.utils.allBars
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,31 +39,45 @@ fun ScorerScaffold(
     content: @Composable () -> Unit
 ) {
     val windowSize = LocalWindowSize.current
-    Scaffold(topBar = {
-        AnimatedEnterExit(
-            visible = windowSize == WindowWidthSizeClass.Compact,
-            enter = expandVertically(),
-            exit = shrinkVertically()
-        ) {
-            SmallTopAppBar(title = {
-                Text(title)
-            }, modifier = Modifier.windowInsetsPadding(
-                WindowInsets.allBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
-            ), navigationIcon = navigationIcon, actions = { actions() })
-        }
-    }, bottomBar = {
-        if (navigationItems != null) {
+    Scaffold(
+        topBar = {
             AnimatedEnterExit(
                 visible = windowSize == WindowWidthSizeClass.Compact,
-                enter = expandVertically(expandFrom = Alignment.Top),
-                exit = shrinkVertically(shrinkTowards = Alignment.Top)
+                enter = expandVertically(),
+                exit = shrinkVertically()
             ) {
-                NavigationBar {
-                    NavigationBarScope(this).navigationItems()
+                SmallTopAppBar(
+                    title = {
+                        Text(title)
+                    },
+                    modifier = Modifier.windowInsetsPadding(
+                        WindowInsets.allBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
+                    ),
+                    navigationIcon = navigationIcon,
+                    actions = { actions() }
+                )
+            }
+        },
+        bottomBar = {
+            if (navigationItems != null) {
+                AnimatedEnterExit(
+                    visible = windowSize == WindowWidthSizeClass.Compact,
+                    enter = expandVertically(expandFrom = Alignment.Top),
+                    exit = shrinkVertically(shrinkTowards = Alignment.Top)
+                ) {
+                    NavigationBar(
+                        Modifier.windowInsetsPadding(
+                            WindowInsets.allBars.only(
+                                WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+                            )
+                        )
+                    ) {
+                        NavigationBarScope(this).navigationItems()
+                    }
                 }
             }
         }
-    }) { padding ->
+    ) { padding ->
         Row(
             modifier = Modifier
                 .padding(padding)
@@ -74,15 +88,18 @@ fun ScorerScaffold(
                 enter = expandHorizontally(),
                 exit = shrinkHorizontally()
             ) {
-                NavigationRail(modifier = Modifier.windowInsetsPadding(
-                    WindowInsets.allBars.only(
-                        WindowInsetsSides.Start + WindowInsetsSides.Vertical
-                    )
-                ), header = {
-                    navigationIcon()
-                    Text(text = title, textAlign = TextAlign.Center)
-                    actions()
-                }) {
+                NavigationRail(
+                    modifier = Modifier.windowInsetsPadding(
+                        WindowInsets.allBars.only(
+                            WindowInsetsSides.Start + WindowInsetsSides.Vertical
+                        )
+                    ),
+                    header = {
+                        navigationIcon()
+                        Text(text = title, textAlign = TextAlign.Center)
+                        actions()
+                    }
+                ) {
                     if (navigationItems != null) {
                         NavigationBarScope(this).navigationItems()
                     }

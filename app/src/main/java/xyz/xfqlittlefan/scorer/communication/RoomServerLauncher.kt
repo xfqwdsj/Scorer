@@ -13,8 +13,8 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.serialization.SerializationException
 import xyz.xfqlittlefan.scorer.BuildConfig
-import xyz.xfqlittlefan.scorer.util.decodeFromJson
-import xyz.xfqlittlefan.scorer.util.encodeToJson
+import xyz.xfqlittlefan.scorer.utils.decodeFromJson
+import xyz.xfqlittlefan.scorer.utils.encodeToJson
 
 /**
  * 服务器的启动器。

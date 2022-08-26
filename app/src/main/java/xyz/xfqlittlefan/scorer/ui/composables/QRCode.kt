@@ -12,8 +12,8 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.layout.ContentScale
-import xyz.xfqlittlefan.scorer.util.QREncodeHints
-import xyz.xfqlittlefan.scorer.util.toQR
+import xyz.xfqlittlefan.scorer.utils.QREncodeHints
+import xyz.xfqlittlefan.scorer.utils.toQR
 
 @Composable
 fun QRCode(

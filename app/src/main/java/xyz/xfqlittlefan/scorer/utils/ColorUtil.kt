@@ -1,4 +1,4 @@
-package xyz.xfqlittlefan.scorer.util
+package xyz.xfqlittlefan.scorer.utils
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorMatrix

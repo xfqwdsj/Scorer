@@ -1,4 +1,4 @@
-package xyz.xfqlittlefan.scorer.util
+package xyz.xfqlittlefan.scorer.utils
 
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
