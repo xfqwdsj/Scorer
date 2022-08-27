@@ -59,12 +59,12 @@ fun ScorerScaffold(
             }
         },
         bottomBar = {
-            if (navigationItems != null) {
-                AnimatedEnterExit(
-                    visible = windowSize == WindowWidthSizeClass.Compact,
-                    enter = expandVertically(expandFrom = Alignment.Top),
-                    exit = shrinkVertically(shrinkTowards = Alignment.Top)
-                ) {
+            AnimatedEnterExit(
+                visible = windowSize == WindowWidthSizeClass.Compact && navigationItems != null,
+                enter = expandVertically(expandFrom = Alignment.Top),
+                exit = shrinkVertically(shrinkTowards = Alignment.Top)
+            ) {
+                if (navigationItems != null) {
                     NavigationBar(
                         Modifier.windowInsetsPadding(
                             WindowInsets.allBars.only(
@@ -76,6 +76,7 @@ fun ScorerScaffold(
                     }
                 }
             }
+
         }
     ) { padding ->
         Row(
@@ -100,8 +101,14 @@ fun ScorerScaffold(
                         actions()
                     }
                 ) {
-                    if (navigationItems != null) {
-                        NavigationBarScope(this).navigationItems()
+                    AnimatedEnterExit(
+                        visible = navigationItems != null,
+                        enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+                        exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
+                    ) {
+                        if (navigationItems != null) {
+                            NavigationBarScope(this).navigationItems()
+                        }
                     }
                 }
             }

@@ -70,7 +70,7 @@ import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.NetworkInterface
 
-@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ConnectingScreenViewModel.Connecting() {
     val cameraPermissionState = rememberPermissionState(
