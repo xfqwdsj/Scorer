@@ -1,7 +1,9 @@
 package xyz.xfqlittlefan.scorer.utils
 
+import androidx.compose.runtime.Composable
 import androidx.lifecycle.Observer
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 fun <T> NavController.registerResult(key: String, onResult: (result: T) -> Unit) {
     val liveData = currentBackStackEntry?.savedStateHandle?.getLiveData<T>(key)
@@ -20,4 +22,4 @@ fun <T> NavController.sendResult(key: String, result: T) {
 }
 
 val NavController.currentRoute
-    get() = currentBackStackEntry?.destination?.route
+    @Composable get() = currentBackStackEntryAsState().value?.destination?.route
