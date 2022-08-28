@@ -5,6 +5,7 @@
     <string name="copy">复制</string>
     <string name="share">分享</string>
     <string name="view">查看</string>
+    <string name="expand">展开</string>
     <string name="connecting">连接</string>
     <string name="create_room">创建一个房间</string>
     <string name="creating_room_failed_created">无法创建房间，因为房间已创建</string>

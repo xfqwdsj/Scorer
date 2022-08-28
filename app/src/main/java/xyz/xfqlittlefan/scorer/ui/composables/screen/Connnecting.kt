@@ -33,11 +33,8 @@ import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
@@ -75,11 +72,10 @@ fun ConnectingScreenViewModel.Connecting() {
         Manifest.permission.CAMERA
     )
     val pageController = rememberNavController()
-    val hierarchy = pageController.currentBackStackEntryAsState().value?.destination?.hierarchy
 
     ScorerApp(
         title = stringResource(R.string.connecting),
-        requiredActionsGroup = hierarchy?.firstOrNull()?.route,
+        requiredActionsGroup = pageController.currentRoute,
         actions = {
             group("main") {
                 ActionButtonCreatingRoom()
@@ -96,8 +92,8 @@ fun ConnectingScreenViewModel.Connecting() {
         },
         showNavigationItems = LocalMainViewModel.current.server != null,
         navigationItems = {
-            NavigationItemMain(this@Connecting, hierarchy, pageController)
-            NavigationItemRoomInfo(this@Connecting, hierarchy, pageController)
+            NavigationItemMain(this@Connecting, pageController)
+            NavigationItemRoomInfo(this@Connecting, pageController)
         }
     ) {
         NavHost(navController = pageController, startDestination = "main") {
@@ -134,14 +130,14 @@ fun ConnectingScreenViewModel.Connecting() {
             }
         }
 
-        if (shouldShowRoomInfoDialog) {
+        if (shouldShowRoomAddressesDialog) {
             DialogRoomAddresses()
         }
         if (shouldShowQRDialog) {
-            QRDialog()
+            DialogQR()
         }
         if (shouldShowPermissionRequestingRationaleDialog && cameraPermissionState.status is PermissionStatus.Denied) {
-            RequestPermissionRationaleDialog(cameraPermissionState)
+            DialogPermissionRequestingRationale(cameraPermissionState)
         }
     }
 
@@ -220,11 +216,10 @@ internal fun ConnectingScreenViewModel.ActionButtonDeletingRoom() {
 @Composable
 internal fun NavigationBarScope.NavigationItemMain(
     viewModel: ConnectingScreenViewModel,
-    hierarchy: Sequence<NavDestination>?,
     pageController: NavController
 ) {
     NavigationBarItem(
-        selected = hierarchy.isRouteMatched("main"),
+        selected = pageController.currentRoute == "main",
         onClick = { viewModel.navigatePage(pageController, "main") },
         icon = {
             Icon(
@@ -240,11 +235,10 @@ internal fun NavigationBarScope.NavigationItemMain(
 @Composable
 internal fun NavigationBarScope.NavigationItemRoomInfo(
     viewModel: ConnectingScreenViewModel,
-    hierarchy: Sequence<NavDestination>?,
     pageController: NavController
 ) {
     NavigationBarItem(
-        selected = hierarchy.isRouteMatched("room_info"),
+        selected = pageController.currentRoute == "room_info",
         onClick = { viewModel.navigatePage(pageController, "room_info") },
         icon = {
             Icon(
@@ -380,11 +374,6 @@ internal fun ConnectingScreenViewModel.Buttons() {
             onClick = this@Buttons::cancelSelectingSeats,
             text = stringResource(R.string.cancel_connection)
         )
-        MyButton(
-            enabled = LocalMainViewModel.current.server != null,
-            onClick = this@Buttons::showRoomInfoDialog,
-            text = stringResource(R.string.room_information)
-        )
     }
 }
 
@@ -395,28 +384,42 @@ internal fun ConnectingScreenViewModel.ListItemRoomAddresses() {
         headlineText = {
             Text(stringResource(R.string.room_addresses))
         },
-        modifier = Modifier.clickable { },
+        modifier = Modifier.clickable(onClick = this::showRoomAddressesDialog),
         supportingText = {
             Row(Modifier.horizontalScroll(rememberScrollState())) {
                 AssistChip(
                     onClick = { },
-                    label = { Text(stringResource(R.string.qr)) },
+                    label = { Text(stringResource(R.string.show_qr)) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.QrCode,
-                            contentDescription = stringResource(R.string.qr)
+                            contentDescription = stringResource(R.string.show_qr)
                         )
-                    })
+                    },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = stringResource(R.string.expand)
+                        )
+                    }
+                )
                 Spacer(Modifier.width(10.dp))
                 AssistChip(
-                    onClick = {},
+                    onClick = { },
                     label = { Text(stringResource(android.R.string.copy)) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.ContentCopy,
                             contentDescription = stringResource(android.R.string.copy)
                         )
-                    })
+                    },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = stringResource(R.string.expand)
+                        )
+                    }
+                )
                 Spacer(Modifier.width(10.dp))
                 AssistChip(
                     onClick = { },
@@ -426,7 +429,14 @@ internal fun ConnectingScreenViewModel.ListItemRoomAddresses() {
                             imageVector = Icons.Default.Share,
                             contentDescription = stringResource(R.string.share)
                         )
-                    })
+                    },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = stringResource(R.string.expand)
+                        )
+                    }
+                )
             }
         },
         trailingContent = {
@@ -502,7 +512,7 @@ internal fun ConnectingScreenViewModel.DialogRoomAddresses() {
 }
 
 @Composable
-internal fun ConnectingScreenViewModel.QRDialog() {
+internal fun ConnectingScreenViewModel.DialogQR() {
     AlertDialog(onDismissRequest = this::dismissQRDialog, confirmButton = {
         Button(onClick = this::dismissQRDialog) {
             Text(stringResource(android.R.string.ok))
@@ -533,7 +543,7 @@ internal fun ConnectingScreenViewModel.QRDialog() {
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-internal fun ConnectingScreenViewModel.RequestPermissionRationaleDialog(
+internal fun ConnectingScreenViewModel.DialogPermissionRequestingRationale(
     cameraPermissionState: PermissionState
 ) {
     AlertDialog(
@@ -586,7 +596,7 @@ class ConnectingScreenViewModel : ViewModel() {
     var gettingSeatsJob: Job? = null
         private set
 
-    var shouldShowRoomInfoDialog by mutableStateOf(false)
+    var shouldShowRoomAddressesDialog by mutableStateOf(false)
         private set
 
     var actionsEnabled by mutableStateOf(!shouldShowSeats && gettingSeatsJob == null)
@@ -705,12 +715,12 @@ class ConnectingScreenViewModel : ViewModel() {
         selectedSeat = null
     }
 
-    fun showRoomInfoDialog() {
-        shouldShowRoomInfoDialog = true
+    fun showRoomAddressesDialog() {
+        shouldShowRoomAddressesDialog = true
     }
 
     fun dismissRoomAddressesDialog() {
-        shouldShowRoomInfoDialog = false
+        shouldShowRoomAddressesDialog = false
     }
 
     fun showAddressMenu(index: Int) {
@@ -739,7 +749,7 @@ class ConnectingScreenViewModel : ViewModel() {
     }
 
     fun deleteRoom(mainViewModel: MainViewModel) {
-        shouldShowRoomInfoDialog = false
+        shouldShowRoomAddressesDialog = false
         viewModelScope.launch(Dispatchers.IO) {
             mainViewModel.server?.server?.stop()
         }
@@ -771,7 +781,7 @@ class ConnectingScreenViewModel : ViewModel() {
                     this@ConnectingScreenViewModel.host = ""
                     this@ConnectingScreenViewModel.port = ""
                 }
-                shouldShowRoomInfoDialog = false
+                shouldShowRoomAddressesDialog = false
                 roomAddresses = emptyList()
                 addressMenuShowingIndex = null
                 cancelSelectingSeats()
