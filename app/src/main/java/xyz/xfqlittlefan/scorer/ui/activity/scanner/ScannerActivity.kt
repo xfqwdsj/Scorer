@@ -23,7 +23,7 @@ import androidx.core.view.WindowCompat
 import xyz.xfqlittlefan.scorer.R
 import xyz.xfqlittlefan.scorer.qr.QRAnalyzer
 import xyz.xfqlittlefan.scorer.ui.composables.CameraX
-import xyz.xfqlittlefan.scorer.ui.composables.ScorerScaffold
+import xyz.xfqlittlefan.scorer.ui.composables.ScorerApp
 import xyz.xfqlittlefan.scorer.ui.theme.ScorerTheme
 
 class ScannerActivity : ComponentActivity() {
@@ -32,7 +32,7 @@ class ScannerActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             ScorerTheme {
-                ScorerScaffold(
+                ScorerApp(
                     title = stringResource(R.string.scan_qr),
                     navigationIcon = {
                         IconButton(onClick = { finish() }) {

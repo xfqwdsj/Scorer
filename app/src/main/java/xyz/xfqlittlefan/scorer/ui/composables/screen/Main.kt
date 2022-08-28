@@ -10,7 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import xyz.xfqlittlefan.scorer.R
-import xyz.xfqlittlefan.scorer.ui.composables.ScorerScaffold
+import xyz.xfqlittlefan.scorer.ui.composables.ScorerApp
 import java.net.URI
 
 @Composable
@@ -33,7 +33,7 @@ fun Main(
         }
     }
 
-    ScorerScaffold(
+    ScorerApp(
         title = stringResource(R.string.page_title_main)
     ) {
         val mainNavController = rememberNavController()

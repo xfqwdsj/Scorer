@@ -62,24 +62,27 @@ class NavigationBarScope(private val scope: Any) {
         enabled: Boolean = true,
         label: @Composable (() -> Unit)? = null
     ) {
-        if (scope is ColumnScope) {
-            NavigationRailItem(
-                selected = selected,
-                onClick = onClick,
-                icon = icon,
-                modifier = modifier,
-                enabled = enabled,
-                label = label
-            )
-        } else if (scope is RowScope) {
-            scope.NavigationBarItem(
-                selected = selected,
-                onClick = onClick,
-                icon = icon,
-                modifier = modifier,
-                enabled = enabled,
-                label = label
-            )
+        when (scope) {
+            is ColumnScope -> {
+                NavigationRailItem(
+                    selected = selected,
+                    onClick = onClick,
+                    icon = icon,
+                    modifier = modifier,
+                    enabled = enabled,
+                    label = label
+                )
+            }
+            is RowScope -> {
+                scope.NavigationBarItem(
+                    selected = selected,
+                    onClick = onClick,
+                    icon = icon,
+                    modifier = modifier,
+                    enabled = enabled,
+                    label = label
+                )
+            }
         }
     }
 }

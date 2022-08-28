@@ -12,14 +12,12 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.*
@@ -77,22 +75,27 @@ fun ConnectingScreenViewModel.Connecting() {
         Manifest.permission.CAMERA
     )
     val pageController = rememberNavController()
+    val hierarchy = pageController.currentBackStackEntryAsState().value?.destination?.hierarchy
 
-    ScorerScaffold(
+    ScorerApp(
         title = stringResource(R.string.connecting),
+        requiredActionsGroup = hierarchy?.firstOrNull()?.route,
         actions = {
-            ActionButtonCreatingRoom()
-            ActionButtonFillAddress(
-                cameraPermissionState, rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.StartActivityForResult(),
-                    onResult = this::onActivityResult
+            group("main") {
+                ActionButtonCreatingRoom()
+                ActionButtonFillingAddress(
+                    cameraPermissionState, rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.StartActivityForResult(),
+                        onResult = this@Connecting::onActivityResult
+                    )
                 )
-            )
+            }
+            group("room_info") {
+                ActionButtonDeletingRoom()
+            }
         },
         showNavigationItems = LocalMainViewModel.current.server != null,
         navigationItems = {
-            val hierarchy =
-                pageController.currentBackStackEntryAsState().value?.destination?.hierarchy
             NavigationItemMain(this@Connecting, hierarchy, pageController)
             NavigationItemRoomInfo(this@Connecting, hierarchy, pageController)
         }
@@ -126,13 +129,13 @@ fun ConnectingScreenViewModel.Connecting() {
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-
+                    ListItemRoomAddresses()
                 }
             }
         }
 
         if (shouldShowRoomInfoDialog) {
-            RoomInfoDialog()
+            DialogRoomAddresses()
         }
         if (shouldShowQRDialog) {
             QRDialog()
@@ -171,7 +174,7 @@ internal fun ConnectingScreenViewModel.ActionButtonCreatingRoom() {
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-internal fun ConnectingScreenViewModel.ActionButtonFillAddress(
+internal fun ConnectingScreenViewModel.ActionButtonFillingAddress(
     cameraPermissionState: PermissionState,
     launcher: ActivityResultLauncher<Intent>
 ) {
@@ -200,6 +203,17 @@ internal fun ConnectingScreenViewModel.ActionButtonFillAddress(
                 }
             }
         }
+    }
+}
+
+@Composable
+internal fun ConnectingScreenViewModel.ActionButtonDeletingRoom() {
+    val mainViewModel = LocalMainViewModel.current
+    IconButton(onClick = { deleteRoom(mainViewModel) }) {
+        Icon(
+            imageVector = Icons.Default.Delete,
+            contentDescription = stringResource(R.string.delete_room)
+        )
     }
 }
 
@@ -374,30 +388,69 @@ internal fun ConnectingScreenViewModel.Buttons() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ConnectingScreenViewModel.RoomInfoDialog() {
-    AlertDialog(onDismissRequest = this::dismissRoomInfoDialog, confirmButton = {
-        val mainViewModel = LocalMainViewModel.current
-        Button(
-            onClick = { this.deleteRoom(mainViewModel) },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.error,
-                contentColor = MaterialTheme.colorScheme.onError
+internal fun ConnectingScreenViewModel.ListItemRoomAddresses() {
+    ListItem(
+        headlineText = {
+            Text(stringResource(R.string.room_addresses))
+        },
+        modifier = Modifier.clickable { },
+        supportingText = {
+            Row(Modifier.horizontalScroll(rememberScrollState())) {
+                AssistChip(
+                    onClick = { },
+                    label = { Text(stringResource(R.string.qr)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.QrCode,
+                            contentDescription = stringResource(R.string.qr)
+                        )
+                    })
+                Spacer(Modifier.width(10.dp))
+                AssistChip(
+                    onClick = {},
+                    label = { Text(stringResource(android.R.string.copy)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = stringResource(android.R.string.copy)
+                        )
+                    })
+                Spacer(Modifier.width(10.dp))
+                AssistChip(
+                    onClick = { },
+                    label = { Text(stringResource(R.string.share)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = stringResource(R.string.share)
+                        )
+                    })
+            }
+        },
+        trailingContent = {
+            Icon(
+                imageVector = Icons.Default.NavigateNext,
+                contentDescription = stringResource(R.string.view)
             )
-        ) {
-            Text(stringResource(R.string.delete_room))
         }
+    )
+}
+
+@Composable
+internal fun ConnectingScreenViewModel.DialogRoomAddresses() {
+    AlertDialog(onDismissRequest = this::dismissRoomAddressesDialog, confirmButton = {
+
     }, dismissButton = {
-        Button(onClick = this::dismissRoomInfoDialog) {
+        Button(onClick = this::dismissRoomAddressesDialog) {
             Text(stringResource(android.R.string.cancel))
         }
     }, title = {
-        Text(stringResource(R.string.room_information))
+        Text(stringResource(R.string.room_addresses))
     }, text = {
         Column(Modifier.verticalScroll(rememberScrollState())) {
-            Text(stringResource(R.string.room_address_support_message))
-            Spacer(Modifier.height(10.dp))
-            roomInfoAddresses.forEachIndexed { index, address ->
+            roomAddresses.forEachIndexed { index, address ->
                 Box {
                     Text(text = stringResource(
                         R.string.template_room_address,
@@ -408,7 +461,7 @@ internal fun ConnectingScreenViewModel.RoomInfoDialog() {
                     })
                     DropdownMenu(
                         expanded = addressMenuShowingIndex == index,
-                        onDismissRequest = this@RoomInfoDialog::dismissAddressMenu
+                        onDismissRequest = this@DialogRoomAddresses::dismissAddressMenu
                     ) {
                         val context = LocalContext.current
                         val addressToShare = "ScorerAddress:h${address.first}p${address.second}"
@@ -440,7 +493,7 @@ internal fun ConnectingScreenViewModel.RoomInfoDialog() {
                             })
                     }
                 }
-                if (roomInfoAddresses.lastIndex > index) {
+                if (roomAddresses.lastIndex > index) {
                     Spacer(Modifier.height(5.dp))
                 }
             }
@@ -542,7 +595,7 @@ class ConnectingScreenViewModel : ViewModel() {
     /**
      * 在房间信息对话框中显示的地址列表。
      */
-    var roomInfoAddresses by mutableStateOf(listOf<Pair<String, Int>>())
+    var roomAddresses by mutableStateOf(listOf<Pair<String, Int>>())
         private set
 
     /**
@@ -656,7 +709,7 @@ class ConnectingScreenViewModel : ViewModel() {
         shouldShowRoomInfoDialog = true
     }
 
-    fun dismissRoomInfoDialog() {
+    fun dismissRoomAddressesDialog() {
         shouldShowRoomInfoDialog = false
     }
 
@@ -685,10 +738,10 @@ class ConnectingScreenViewModel : ViewModel() {
         )
     }
 
-    fun deleteRoom(viewModel: MainViewModel) {
+    fun deleteRoom(mainViewModel: MainViewModel) {
         shouldShowRoomInfoDialog = false
         viewModelScope.launch(Dispatchers.IO) {
-            viewModel.server?.server?.stop()
+            mainViewModel.server?.server?.stop()
         }
     }
 
@@ -719,7 +772,7 @@ class ConnectingScreenViewModel : ViewModel() {
                     this@ConnectingScreenViewModel.port = ""
                 }
                 shouldShowRoomInfoDialog = false
-                roomInfoAddresses = emptyList()
+                roomAddresses = emptyList()
                 addressMenuShowingIndex = null
                 cancelSelectingSeats()
             }
@@ -735,7 +788,7 @@ class ConnectingScreenViewModel : ViewModel() {
                     }
                 }
             }
-            roomInfoAddresses = addressesTemp
+            roomAddresses = addressesTemp
             viewModel.server = launcher
             getSeats()
         }
