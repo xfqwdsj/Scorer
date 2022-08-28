@@ -168,7 +168,7 @@ class ScorerAppActionsScope<K> {
                     if (groups.keys.indexOf(initialState) < groups.keys.indexOf(targetState)) 1 else -1
                 when (direction) {
                     Direction.Vertical -> fadeIn() + slideInVertically { -it * factor / 2 } with slideOutVertically { it * factor / 2 } + fadeOut()
-                    Direction.Horizontal -> fadeIn() + slideInHorizontally { -it * factor / 2 } with slideOutHorizontally { it * factor / 2 } + fadeOut()
+                    Direction.Horizontal -> fadeIn() + slideInHorizontally { it * factor / 2 } with slideOutHorizontally { -it * factor / 2 } + fadeOut()
                 }.using(SizeTransform(clip = false))
             }) {
                 when (direction) {
