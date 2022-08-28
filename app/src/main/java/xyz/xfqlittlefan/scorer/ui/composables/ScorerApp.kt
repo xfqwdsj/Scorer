@@ -167,16 +167,17 @@ class ScorerAppActionsScope<K> {
                 val factor =
                     if (groups.keys.indexOf(initialState) < groups.keys.indexOf(targetState)) 1 else -1
                 when (direction) {
-                    Direction.Vertical -> fadeIn() + slideInVertically { -it * factor / 2 } with slideOutVertically { it * factor / 2 } + fadeOut()
+                    Direction.Vertical -> fadeIn() + slideInVertically { it * factor / 2 } with slideOutVertically { -it * factor / 2 } + fadeOut()
                     Direction.Horizontal -> fadeIn() + slideInHorizontally { it * factor / 2 } with slideOutHorizontally { -it * factor / 2 } + fadeOut()
                 }.using(SizeTransform(clip = false))
             }) {
+                val content = groups.getOrElse(it) { {} }
                 when (direction) {
                     Direction.Vertical -> Column {
-                        groups.getOrElse(it) { {} }()
+                        content()
                     }
                     Direction.Horizontal -> Row {
-                        groups.getOrElse(it) { {} }()
+                        content()
                     }
                 }
             }
