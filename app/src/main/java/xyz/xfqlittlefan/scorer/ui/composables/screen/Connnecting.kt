@@ -89,14 +89,13 @@ fun ConnectingScreenViewModel.Connecting() {
                 )
             )
         },
-        navigationItems = if (LocalMainViewModel.current.server != null) {
-            {
-                val hierarchy =
-                    pageController.currentBackStackEntryAsState().value?.destination?.hierarchy
-                NavigationItemMain(this@Connecting, hierarchy, pageController)
-                NavigationItemRoomInfo(this@Connecting, hierarchy, pageController)
-            }
-        } else null
+        showNavigationItems = LocalMainViewModel.current.server != null,
+        navigationItems = {
+            val hierarchy =
+                pageController.currentBackStackEntryAsState().value?.destination?.hierarchy
+            NavigationItemMain(this@Connecting, hierarchy, pageController)
+            NavigationItemRoomInfo(this@Connecting, hierarchy, pageController)
+        }
     ) {
         NavHost(navController = pageController, startDestination = "main") {
             composable("main") {

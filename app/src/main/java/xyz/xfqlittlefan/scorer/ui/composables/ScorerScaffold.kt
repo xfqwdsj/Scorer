@@ -35,13 +35,14 @@ fun ScorerScaffold(
             }
         }
     },
-    navigationItems: (@Composable NavigationBarScope.() -> Unit)? = null,
+    showNavigationItems: Boolean = true,
+    navigationItems: @Composable NavigationBarScope.() -> Unit = {},
     content: @Composable () -> Unit
 ) {
     val windowSize = LocalWindowSize.current
-    Scaffold(
-        topBar = {
-            AnimatedEnterExit(
+    Surface {
+        Column(Modifier.fillMaxSize()) {
+            AnimatedVisibility(
                 visible = windowSize == WindowWidthSizeClass.Compact,
                 enter = expandVertically(),
                 exit = shrinkVertically()
@@ -57,62 +58,54 @@ fun ScorerScaffold(
                     actions = { actions() }
                 )
             }
-        },
-        bottomBar = {
-            AnimatedEnterExit(
-                visible = windowSize == WindowWidthSizeClass.Compact && navigationItems != null,
-                enter = expandVertically(expandFrom = Alignment.Top),
-                exit = shrinkVertically(shrinkTowards = Alignment.Top)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             ) {
-                if (navigationItems != null) {
-                    NavigationBar(
-                        Modifier.windowInsetsPadding(
-                            WindowInsets.allBars.only(
-                                WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
-                            )
-                        )
-                    ) {
-                        NavigationBarScope(this).navigationItems()
-                    }
-                }
-            }
-
-        }
-    ) { padding ->
-        Row(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
-            AnimatedEnterExit(
-                visible = windowSize != WindowWidthSizeClass.Compact,
-                enter = expandHorizontally(),
-                exit = shrinkHorizontally()
-            ) {
-                NavigationRail(
-                    modifier = Modifier.windowInsetsPadding(
-                        WindowInsets.allBars.only(
-                            WindowInsetsSides.Start + WindowInsetsSides.Vertical
-                        )
-                    ),
-                    header = {
-                        navigationIcon()
-                        Text(text = title, textAlign = TextAlign.Center)
-                        actions()
-                    }
+                AnimatedVisibility(
+                    visible = windowSize != WindowWidthSizeClass.Compact,
+                    enter = expandHorizontally(),
+                    exit = shrinkHorizontally()
                 ) {
-                    AnimatedEnterExit(
-                        visible = navigationItems != null,
-                        enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
-                        exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
+                    NavigationRail(
+                        modifier = Modifier.windowInsetsPadding(
+                            WindowInsets.allBars.only(
+                                WindowInsetsSides.Start + WindowInsetsSides.Vertical
+                            )
+                        ),
+                        header = {
+                            navigationIcon()
+                            Text(text = title, textAlign = TextAlign.Center)
+                            actions()
+                        }
                     ) {
-                        if (navigationItems != null) {
-                            NavigationBarScope(this).navigationItems()
+                        Crossfade(targetState = showNavigationItems) {
+                            if (it) {
+                                Column {
+                                    NavigationBarScope(this).navigationItems()
+                                }
+                            }
                         }
                     }
                 }
+                content()
             }
-            content()
+            AnimatedVisibility(
+                visible = windowSize == WindowWidthSizeClass.Compact && showNavigationItems,
+                enter = expandVertically(expandFrom = Alignment.Top),
+                exit = shrinkVertically(shrinkTowards = Alignment.Top)
+            ) {
+                NavigationBar(
+                    Modifier.windowInsetsPadding(
+                        WindowInsets.allBars.only(
+                            WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+                        )
+                    )
+                ) {
+                    NavigationBarScope(this).navigationItems()
+                }
+            }
         }
     }
 }

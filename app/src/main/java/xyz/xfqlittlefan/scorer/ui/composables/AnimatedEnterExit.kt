@@ -1,7 +1,8 @@
 package xyz.xfqlittlefan.scorer.ui.composables
 
 import androidx.compose.animation.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -22,4 +23,16 @@ fun AnimatedEnterExit(
             content()
         }
     }
+}
+
+@Composable
+fun AnimatedEnterExit(
+    modifier: Modifier = Modifier,
+    enterFrom: Alignment = Alignment.TopStart,
+    exitTo: Alignment = Alignment.TopStart,
+    content: (@Composable () -> Unit)?
+) {
+    var rememberedContent by remember { mutableStateOf(content) }
+
+
 }
