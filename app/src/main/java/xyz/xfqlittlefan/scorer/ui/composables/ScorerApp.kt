@@ -134,7 +134,7 @@ fun ScorerApp(
             }
         }
     },
-    showNavigationItems: Boolean = true,
+    showNavigationItems: Boolean = false,
     navigationItems: @Composable NavigationBarScope.() -> Unit = {},
     content: @Composable () -> Unit
 ) {
