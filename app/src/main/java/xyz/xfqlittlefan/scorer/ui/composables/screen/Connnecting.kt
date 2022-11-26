@@ -450,95 +450,127 @@ internal fun ConnectingScreenViewModel.ListItemRoomAddresses() {
 
 @Composable
 internal fun ConnectingScreenViewModel.DialogRoomAddresses() {
-    AlertDialog(onDismissRequest = this::dismissRoomAddressesDialog, confirmButton = {
+    fun getRecognizableText(port: String, vararg hosts: String): String {
+        val recognizableHost = hosts.joinToString { "h$it" }
+        return "ScorerAddresses:${recognizableHost}p$port"
+    }
 
-    }, dismissButton = {
-        Button(onClick = this::dismissRoomAddressesDialog) {
-            Text(stringResource(android.R.string.cancel))
-        }
-    }, title = {
-        Text(stringResource(R.string.room_addresses))
-    }, text = {
-        Column(Modifier.verticalScroll(rememberScrollState())) {
-            roomAddresses.forEachIndexed { index, address ->
-                Box {
-                    Text(text = stringResource(
-                        R.string.template_room_address,
-                        address.first,
-                        address.second.toString()
-                    ), modifier = Modifier.clickable {
-                        showAddressMenu(index)
-                    })
-                    DropdownMenu(
-                        expanded = addressMenuShowingIndex == index,
-                        onDismissRequest = this@DialogRoomAddresses::dismissAddressMenu
-                    ) {
-                        val context = LocalContext.current
-                        val addressToShare = "ScorerAddress:h${address.first}p${address.second}"
-                        val sharingMessage = stringResource(
-                            R.string.template_room_sharing_message
+    val context = LocalContext.current
+    val sharingMessage = stringResource(
+        R.string.template_room_sharing_message
+    )
+
+    AlertDialog(
+        onDismissRequest = this::dismissRoomAddressesDialog,
+        confirmButton = {
+            Button(onClick = {
+                copyAddress(
+                    context,
+                    getRecognizableText(port, *roomHosts.toTypedArray())
+                )
+            }) {
+                Text(stringResource(R.string.copy))
+            }
+        },
+        dismissButton = {
+            Button(onClick = this::dismissRoomAddressesDialog) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+        title = {
+            Text(stringResource(R.string.room_addresses))
+        },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                roomHosts.forEachIndexed { index, host ->
+                    Box {
+                        Text(
+                            text = stringResource(
+                                R.string.template_room_address,
+                                host,
+                                roomPort
+                            ),
+                            modifier = Modifier.clickable {
+                                showAddressMenu(index)
+                            }
                         )
-                        DropdownMenuItem(text = { Text(stringResource(R.string.copy)) },
-                            onClick = {
-                                copyAddress(
-                                    context,
-                                    addressToShare
-                                )
-                                dismissAddressMenu()
-                            })
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.share)) },
-                            onClick = {
-                                shareAddress(
-                                    context, "$sharingMessage\n$addressToShare"
-                                )
-                                dismissAddressMenu()
-                            })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.show_qr)) },
-                            onClick = {
-                                showQR(
-                                    address.first, address.second
-                                )
-                                dismissAddressMenu()
-                            })
+                        DropdownMenu(
+                            expanded = addressMenuShowingIndex == index,
+                            onDismissRequest = this@DialogRoomAddresses::dismissAddressMenu
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.copy)) },
+                                onClick = {
+                                    copyAddress(
+                                        context,
+                                        getRecognizableText(roomPort, host)
+                                    )
+                                    dismissAddressMenu()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.share)) },
+                                onClick = {
+                                    shareAddress(
+                                        context,
+                                        "$sharingMessage\n${getRecognizableText(roomPort, host)}"
+                                    )
+                                    dismissAddressMenu()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.show_qr)) },
+                                onClick = {
+                                    showQR(
+                                        host, roomPort
+                                    )
+                                    dismissAddressMenu()
+                                }
+                            )
+                        }
                     }
-                }
-                if (roomAddresses.lastIndex > index) {
-                    Spacer(Modifier.height(5.dp))
+                    if (roomHosts.lastIndex > index) {
+                        Spacer(Modifier.height(5.dp))
+                    }
                 }
             }
         }
-    })
+    )
 }
 
 @Composable
 internal fun ConnectingScreenViewModel.DialogQR() {
-    AlertDialog(onDismissRequest = this::dismissQRDialog, confirmButton = {
-        Button(onClick = this::dismissQRDialog) {
-            Text(stringResource(android.R.string.ok))
-        }
-    }, title = {
-        Text(stringResource(R.string.room_addresses_qr))
-    }, text = {
-        qrContent?.let { content ->
-            Box(Modifier.fillMaxWidth()) {
-                QRCode(
-                    text = content,
-                    contentDescription = stringResource(R.string.room_addresses_qr),
-                    modifier = Modifier
-                        .aspectRatio(1f)
-                        .fillMaxSize(),
-                    colorFilter = ColorFilter.colorMatrix(
-                        filteredWhiteColorMatrixWithTint(
-                            MaterialTheme.colorScheme.onSurface
+    AlertDialog(
+        onDismissRequest = this::dismissQRDialog,
+        confirmButton = {
+            Button(onClick = this::dismissQRDialog) {
+                Text(stringResource(android.R.string.ok))
+            }
+        },
+        title = {
+            Text(stringResource(R.string.room_addresses_qr))
+        },
+        text = {
+            qrContent?.let { content ->
+                Box(Modifier.fillMaxWidth()) {
+                    QRCode(
+                        text = content,
+                        contentDescription = stringResource(R.string.room_addresses_qr),
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .fillMaxSize(),
+                        colorFilter = ColorFilter.colorMatrix(
+                            filteredWhiteColorMatrixWithTint(
+                                MaterialTheme.colorScheme.onSurface
+                            )
                         )
-                    )
-                ) {
-                    margin = 2
+                    ) {
+                        margin = 2
+                    }
                 }
             }
         }
-    })
+    )
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -565,7 +597,8 @@ internal fun ConnectingScreenViewModel.DialogPermissionRequestingRationale(
             Text(
                 stringResource(R.string.request_camera_permission_summary)
             )
-        })
+        }
+    )
 }
 
 class ConnectingScreenViewModel : ViewModel() {
@@ -603,9 +636,12 @@ class ConnectingScreenViewModel : ViewModel() {
         private set
 
     /**
-     * 在房间信息对话框中显示的地址列表。
+     * 在房间信息对话框中显示的主机列表。
      */
-    var roomAddresses by mutableStateOf(listOf<Pair<String, Int>>())
+    var roomHosts = mutableStateListOf<String>()
+        private set
+
+    var roomPort by mutableStateOf("")
         private set
 
     /**
@@ -755,8 +791,8 @@ class ConnectingScreenViewModel : ViewModel() {
         }
     }
 
-    fun showQR(host: String, port: Int) {
-        qrContent = RoomAddressQRCode(host, port).encodeToJson()
+    fun showQR(host: String, port: String) {
+        qrContent = RoomAddressQRCode(host, port.toInt()).encodeToJson()
         shouldShowQRDialog = true
     }
 
@@ -782,23 +818,22 @@ class ConnectingScreenViewModel : ViewModel() {
                     this@ConnectingScreenViewModel.port = ""
                 }
                 shouldShowRoomAddressesDialog = false
-                roomAddresses = emptyList()
+                roomHosts.clear()
                 addressMenuShowingIndex = null
                 cancelSelectingSeats()
             }
             this@ConnectingScreenViewModel.host = host
             this@ConnectingScreenViewModel.port = port.toString()
-            val addressesTemp = mutableListOf<Pair<String, Int>>()
             val interfaces = NetworkInterface.getNetworkInterfaces()
             for (networkInterface in interfaces) {
                 val ipAddresses = networkInterface.inetAddresses
                 for (ipAddress in ipAddresses) {
                     if (!ipAddress.isLoopbackAddress && !ipAddress.isLinkLocalAddress) {
-                        addressesTemp += (ipAddress.hostAddress ?: "") to port
+                        roomHosts += ipAddress.hostAddress ?: ""
                     }
                 }
             }
-            roomAddresses = addressesTemp
+            roomPort = port.toString()
             viewModel.server = launcher
             getSeats()
         }
