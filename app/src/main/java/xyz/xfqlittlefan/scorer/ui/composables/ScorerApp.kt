@@ -50,17 +50,15 @@ fun <ACTIONS_KEY> ScorerApp(
                 enter = expandVertically(),
                 exit = shrinkVertically()
             ) {
-                SmallTopAppBar(
+                TopAppBar(
                     title = {
                         Text(title)
                     },
-                    modifier = Modifier.windowInsetsPadding(
-                        WindowInsets.allBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
-                    ),
                     navigationIcon = navigationIcon,
                     actions = {
                         actionsScope[requiredActionsGroup, Direction.Horizontal]()
-                    }
+                    },
+                    windowInsets = WindowInsets.allBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
                 )
             }
             Row(
@@ -176,6 +174,7 @@ class ScorerAppActionsScope<K> {
                     Direction.Vertical -> Column {
                         content()
                     }
+
                     Direction.Horizontal -> Row {
                         content()
                     }
@@ -186,6 +185,5 @@ class ScorerAppActionsScope<K> {
 }
 
 internal enum class Direction {
-    Vertical,
-    Horizontal
+    Vertical, Horizontal
 }
