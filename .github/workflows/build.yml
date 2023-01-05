@@ -1,12 +1,18 @@
-name: Building Release
+name: Build
 
 on:
   push:
     branches:
       - master
+  pull_request:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        type:
+          - Debug
+          - Release
     runs-on: ubuntu-latest
 
     steps:
@@ -16,7 +22,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: '11'
+          java-version: '17'
       - name: 设置缓存
         uses: actions/cache@v3
         with:
@@ -29,19 +35,19 @@ jobs:
           mkdir app/key
           echo ${{ secrets.KEY }} | base64 --decode >> app/key/scorer.jks
           echo ${{ secrets.PROPERTIES }} | base64 --decode >> app/key.properties
-      - name: 编译
+      - name: 编译 ${{ matrix.type }}
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleRelease
+          ./gradlew assemble${{ matrix.type }}
       - name: 上传 APK
         uses: actions/upload-artifact@v3
         with:
-          name: ci-release-apk
+          name: Scorer-Apk-${{ matrix.type }}
           path: app/build/outputs/apk/
       - name: 上传其他
         uses: actions/upload-artifact@v3
         with:
-          name: ci-release-other
+          name: Scorer-Other-${{ matrix.type }}
           path: |
             app/build/outputs/logs/
             app/build/outputs/mapping/
