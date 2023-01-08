@@ -60,17 +60,64 @@
 #    static <1>$$serializer INSTANCE;
 #}
 
-# Netty
--keepclassmembernames class io.netty.buffer.AbstractByteBufAllocator {
-    *;
-}
--keepclassmembernames class io.netty.buffer.AdvancedLeakAwareByteBuf {
-    *;
-}
--keep public class io.netty.util.ReferenceCountUtil {
-    *;
-}
+## Netty
+#-keepattributes Signature,InnerClasses
+#-keepclasseswithmembers class io.netty.** {
+#    *;
+#}
+#-keepnames class io.netty.** {
+#    *;
+#}
 
+# Ktor
+-keep class io.ktor.server.netty.EngineMain { *; }
+-keep class io.ktor.server.config.HoconConfigLoader { *; }
+-keep class kotlin.reflect.jvm.internal.** { *; }
+-keep class kotlin.text.RegexOption { *; }
+
+#-dontwarn io.netty.internal.tcnative.AsyncSSLPrivateKeyMethod
+#-dontwarn io.netty.internal.tcnative.AsyncTask
+#-dontwarn io.netty.internal.tcnative.Buffer
+#-dontwarn io.netty.internal.tcnative.CertificateCallback
+#-dontwarn io.netty.internal.tcnative.CertificateCompressionAlgo
+#-dontwarn io.netty.internal.tcnative.CertificateVerifier
+#-dontwarn io.netty.internal.tcnative.Library
+#-dontwarn io.netty.internal.tcnative.SSL
+#-dontwarn io.netty.internal.tcnative.SSLContext
+#-dontwarn io.netty.internal.tcnative.SSLPrivateKeyMethod
+#-dontwarn io.netty.internal.tcnative.SSLSessionCache
+#-dontwarn io.netty.internal.tcnative.SessionTicketKey
+#-dontwarn io.netty.internal.tcnative.SniHostNameMatcher
+#-dontwarn java.lang.management.ManagementFactory
+#-dontwarn java.lang.management.RuntimeMXBean
+#-dontwarn org.apache.log4j.Level
+#-dontwarn org.apache.log4j.Logger
+#-dontwarn org.apache.log4j.Priority
+#-dontwarn org.apache.logging.log4j.Level
+#-dontwarn org.apache.logging.log4j.LogManager
+#-dontwarn org.apache.logging.log4j.Logger
+#-dontwarn org.apache.logging.log4j.message.MessageFactory
+#-dontwarn org.apache.logging.log4j.spi.ExtendedLogger
+#-dontwarn org.apache.logging.log4j.spi.ExtendedLoggerWrapper
+#-dontwarn org.bouncycastle.jsse.BCSSLParameters
+#-dontwarn org.bouncycastle.jsse.BCSSLSocket
+#-dontwarn org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
+#-dontwarn org.conscrypt.BufferAllocator
+#-dontwarn org.conscrypt.Conscrypt$Version
+#-dontwarn org.conscrypt.Conscrypt
+#-dontwarn org.conscrypt.ConscryptHostnameVerifier
+#-dontwarn org.conscrypt.HandshakeListener
+#-dontwarn org.eclipse.jetty.npn.NextProtoNego$ClientProvider
+#-dontwarn org.eclipse.jetty.npn.NextProtoNego$Provider
+#-dontwarn org.eclipse.jetty.npn.NextProtoNego$ServerProvider
+#-dontwarn org.eclipse.jetty.npn.NextProtoNego
+#-dontwarn org.jetbrains.annotations.Async$Execute
+#-dontwarn org.jetbrains.annotations.Async$Schedule
+#-dontwarn org.openjsse.javax.net.ssl.SSLParameters
+#-dontwarn org.openjsse.javax.net.ssl.SSLSocket
+#-dontwarn org.openjsse.net.ssl.OpenJSSE
+#-dontwarn org.slf4j.impl.StaticLoggerBinder
+#-dontwarn reactor.blockhound.integration.BlockHoundIntegration
 -dontwarn io.netty.internal.tcnative.AsyncSSLPrivateKeyMethod
 -dontwarn io.netty.internal.tcnative.AsyncTask
 -dontwarn io.netty.internal.tcnative.Buffer
@@ -84,8 +131,14 @@
 -dontwarn io.netty.internal.tcnative.SSLSessionCache
 -dontwarn io.netty.internal.tcnative.SessionTicketKey
 -dontwarn io.netty.internal.tcnative.SniHostNameMatcher
+-dontwarn jakarta.servlet.ServletContainerInitializer
+-dontwarn java.lang.Module
 -dontwarn java.lang.management.ManagementFactory
 -dontwarn java.lang.management.RuntimeMXBean
+-dontwarn java.lang.module.ModuleDescriptor
+-dontwarn javax.naming.Context
+-dontwarn javax.naming.InitialContext
+-dontwarn javax.naming.NamingException
 -dontwarn org.apache.log4j.Level
 -dontwarn org.apache.log4j.Logger
 -dontwarn org.apache.log4j.Priority
@@ -98,6 +151,7 @@
 -dontwarn org.bouncycastle.jsse.BCSSLParameters
 -dontwarn org.bouncycastle.jsse.BCSSLSocket
 -dontwarn org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
+-dontwarn org.codehaus.janino.ClassBodyEvaluator
 -dontwarn org.conscrypt.BufferAllocator
 -dontwarn org.conscrypt.Conscrypt$Version
 -dontwarn org.conscrypt.Conscrypt
@@ -112,5 +166,4 @@
 -dontwarn org.openjsse.javax.net.ssl.SSLParameters
 -dontwarn org.openjsse.javax.net.ssl.SSLSocket
 -dontwarn org.openjsse.net.ssl.OpenJSSE
--dontwarn org.slf4j.impl.StaticLoggerBinder
 -dontwarn reactor.blockhound.integration.BlockHoundIntegration
