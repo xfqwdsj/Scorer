@@ -67,7 +67,7 @@ import java.net.NetworkInterface
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun ConnectingScreenViewModel.Connecting() {
+fun ConnectingScreenViewModel.Composable() {
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
     )
@@ -82,7 +82,7 @@ fun ConnectingScreenViewModel.Connecting() {
                 ActionButtonFillingAddress(
                     cameraPermissionState, rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.StartActivityForResult(),
-                        onResult = this@Connecting::onActivityResult
+                        onResult = this@Composable::onActivityResult
                     )
                 )
             }
@@ -92,8 +92,8 @@ fun ConnectingScreenViewModel.Connecting() {
         },
         showNavigationItems = LocalMainViewModel.current.server != null,
         navigationItems = {
-            NavigationItemMain(this@Connecting, pageController)
-            NavigationItemRoomInfo(this@Connecting, pageController)
+            NavigationItemMain(this@Composable, pageController)
+            NavigationItemRoomInfo(this@Composable, pageController)
         }
     ) {
         NavHost(navController = pageController, startDestination = "main") {
@@ -451,7 +451,7 @@ internal fun ConnectingScreenViewModel.ListItemRoomAddresses() {
 @Composable
 internal fun ConnectingScreenViewModel.DialogRoomAddresses() {
     fun getRecognizableText(port: String, vararg hosts: String): String {
-        val recognizableHost = hosts.joinToString { "h$it" }
+        val recognizableHost = hosts.joinToString(separator = "") { "h$it" }
         return "ScorerAddresses:${recognizableHost}p$port"
     }
 
