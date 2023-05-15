@@ -5,24 +5,28 @@ on:
     branches:
       - master
   pull_request:
+    branches:
+      - master
 
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         type:
           - Debug
           - Release
-    runs-on: ubuntu-latest
 
+    name: Build ${{ matrix.type }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: 设置 JDK
         uses: actions/setup-java@v2
         with:
-          distribution: adopt
-          java-version: '17'
+          distribution: temurin
+          java-version: '19'
       - name: 设置缓存
         uses: actions/cache@v3
         with:
