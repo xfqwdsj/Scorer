@@ -14,7 +14,7 @@ def camerax_version = '1.2.2'
 def signingProperties = new Properties()
 def signingPropertiesFile = project.file('key.properties')
 if (signingPropertiesFile.exists()) {
-    signingProperties.withReader('UTF-8') { reader ->
+    signingPropertiesFile.withReader('UTF-8') { reader ->
         signingProperties.load(reader)
     }
 }
