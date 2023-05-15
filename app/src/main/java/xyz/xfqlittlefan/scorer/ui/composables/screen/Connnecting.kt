@@ -377,15 +377,14 @@ internal fun ConnectingScreenViewModel.Buttons() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ConnectingScreenViewModel.ListItemRoomAddresses() {
     ListItem(
-        headlineText = {
+        headlineContent = {
             Text(stringResource(R.string.room_addresses))
         },
         modifier = Modifier.clickable(onClick = this::showRoomAddressesDialog),
-        supportingText = {
+        supportingContent = {
             Row(Modifier.horizontalScroll(rememberScrollState())) {
                 AssistChip(
                     onClick = { },
