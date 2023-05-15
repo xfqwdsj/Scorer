@@ -12,21 +12,31 @@ def ktor_version = '2.3.0'
 def camerax_version = '1.2.2'
 
 def signingProperties = new Properties()
-def signingPropertiesFile = rootProject.file('key.properties')
+def signingPropertiesFile = project.file('key.properties')
 if (signingPropertiesFile.exists()) {
-    signingProperties.load(new FileInputStream(signingPropertiesFile))
+    signingProperties.withReader('UTF-8') { reader ->
+        signingProperties.load(reader)
+    }
 }
 
 android {
     namespace 'xyz.xfqlittlefan.scorer'
     compileSdk 33
 
-    signingConfigs {
-        config {
-            storeFile file('key/scorer.jks')
-            storePassword signingProperties.getProperty('a')
-            keyAlias signingProperties.getProperty('b')
-            keyPassword signingProperties.getProperty('c')
+    if (signingProperties['a'] != null && signingProperties['b'] != null && signingProperties['c'] != null) {
+        signingConfigs {
+            config {
+                storeFile file('key/scorer.jks')
+                storePassword signingProperties.getProperty('a')
+                keyAlias signingProperties.getProperty('b')
+                keyPassword signingProperties.getProperty('c')
+            }
+        }
+
+        buildTypes {
+            release {
+                signingConfig signingConfigs.config
+            }
         }
     }
 
@@ -36,7 +46,6 @@ android {
         targetSdk 33
         versionCode 3
         versionName '0.1.0-alpha03'
-        signingConfig signingConfigs.config
 
         vectorDrawables {
             useSupportLibrary true
