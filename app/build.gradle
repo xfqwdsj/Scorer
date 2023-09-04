@@ -8,7 +8,7 @@ def lifecycle_version = '2.6.1'
 def compose_version = '1.5.0-alpha04'
 def compose_material3_version = '1.2.0-alpha01'
 def accompanist_version = '0.30.1'
-def ktor_version = '2.3.3'
+def ktor_version = '2.3.4'
 def camerax_version = '1.2.2'
 
 def signingProperties = new Properties()
